@@ -1,0 +1,104 @@
+/* Custom CSS untuk Sidebar yang tidak bisa di-collapse */
+
+/* Menyembunyikan tombol collapse sidebar */
+.sidebar-mini .main-sidebar .sidebar-toggle {
+    display: none !important;
+}
+
+/* Memastikan sidebar selalu terbuka */
+.sidebar-mini .main-sidebar {
+    width: 250px !important;
+}
+
+.sidebar-mini .content-wrapper {
+    margin-left: 250px !important;
+}
+
+/* Styling untuk header menu */
+.nav-sidebar .nav-header {
+    background-color: #343a40;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 15px;
+    margin: 0;
+    border-bottom: 1px solid #4b545c;
+    text-align: center;
+}
+
+.nav-sidebar .nav-header:hover {
+    background-color: #343a40;
+    color: #fff;
+}
+
+/* Memperbaiki spacing antara header dan menu items */
+.nav-sidebar .nav-item:not(.nav-header) {
+    margin-top: 2px;
+}
+
+/* Styling untuk menu items */
+.nav-sidebar .nav-link {
+    padding: 10px 15px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.nav-sidebar .nav-link:hover {
+    background-color: #495057;
+    color: #fff;
+}
+
+.nav-sidebar .nav-link.active {
+    background-color: #007bff;
+    color: #fff;
+}
+
+/* Icon styling */
+.nav-sidebar .nav-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar-mini .main-sidebar {
+        width: 100% !important;
+    }
+    
+    .sidebar-mini .content-wrapper {
+        margin-left: 0 !important;
+    }
+}
+
+/* Menyembunyikan tombol toggle di mobile */
+@media (max-width: 768px) {
+    .sidebar-mini .main-sidebar .sidebar-toggle {
+        display: none !important;
+    }
+}
+
+/* Styling untuk search box di sidebar */
+.sidebar-search {
+    padding: 15px;
+    border-bottom: 1px solid #4b545c;
+}
+
+.sidebar-search .form-control {
+    background-color: #495057;
+    border: 1px solid #6c757d;
+    color: #fff;
+}
+
+.sidebar-search .form-control::placeholder {
+    color: #adb5bd;
+}
+
+.sidebar-search .form-control:focus {
+    background-color: #495057;
+    border-color: #007bff;
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+} 
