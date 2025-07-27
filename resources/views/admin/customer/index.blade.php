@@ -102,7 +102,23 @@
                 </button>
             </div>
         </div>
+        
         <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-9"></div>
+                <div class="col-md-3 d-flex justify-content-end align-items-center">
+                    <label for="teknisi-filter" class="mr-2 mb-0">Teknisi:</label>
+                    <select id="teknisi-filter" class="form-control form-control-sm w-auto">
+                        <option value="">Semua</option>
+                        @php
+                            $teknisiList = $customers->pluck('creator.name')->unique()->filter()->values();
+                        @endphp
+                        @foreach($teknisiList as $teknisi)
+                            <option value="{{ $teknisi }}">{{ $teknisi }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table id="customers-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -115,6 +131,7 @@
                             <th>Status</th>
                             <th>Dibuat Oleh</th>
                             <th>Aksi</th>
+                            <th class="d-none">Teknisi Filter</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -181,7 +198,7 @@
                                                 <i class="fas fa-user-cog"></i>
                                             </div>
                                             <div>
-                                                <div class="font-weight-bold">{{ $customer->creator->name }}</div>
+                                                <div class="font-weight-bold teknisi-name">{{ $customer->creator->name }}</div>
                                                 <small class="text-muted">{{ ucfirst($customer->creator->role->name ?? 'unknown') }}</small>
                                             </div>
                                         </div>
@@ -244,6 +261,7 @@
                                         </div>
                                     </div>
                                 </td>
+                                <td class="d-none">{{ $customer->creator->name ?? '' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -422,7 +440,7 @@
 @section('js')
     <script>
         $(document).ready(function() {
-            $('#customers-table').DataTable({
+            var table = $('#customers-table').DataTable({
                 responsive: true,
                 autoWidth: false,
                 language: {
@@ -453,6 +471,9 @@
                         text: '<i class="fas fa-print"></i> Print',
                         className: 'btn btn-sm btn-info'
                     }
+                ],
+                columnDefs: [
+                    { targets: [8], visible: false } // Sembunyikan kolom filter teknisi
                 ]
             });
 
@@ -501,6 +522,16 @@
             // Update button text on load and resize
             updateButtonText();
             $(window).resize(updateButtonText);
+
+            // Filter berdasarkan teknisi
+            $('#teknisi-filter').on('change', function() {
+                var val = $(this).val();
+                if (val === "") {
+                    table.column(8).search('').draw(); // Kolom ke-9 (kolom tersembunyi)
+                } else {
+                    table.column(8).search('^' + val + '$', true, false).draw();
+                }
+            });
         });
     </script>
 @stop
