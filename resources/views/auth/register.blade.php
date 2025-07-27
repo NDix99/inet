@@ -1,1 +1,1 @@
-@extends('adminlte::auth.register')
+GAK ISO DAFTAR BROO
