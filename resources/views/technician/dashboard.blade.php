@@ -53,7 +53,7 @@
             <div class="small-box bg-success">
                 <div class="inner">
                     <h3>Rp {{ number_format($totalFee, 0, ',', '.') }}</h3>
-                    <p>Total Pendapatan</p>
+                    <p>Total Fee Mitra</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-money-bill-wave"></i>
