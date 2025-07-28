@@ -8,6 +8,9 @@ use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\CustomersImport; // Nanti kita buat
+use Illuminate\Support\Facades\Log;
 
 class TechnicianController extends Controller
 {
@@ -288,5 +291,20 @@ class TechnicianController extends Controller
         // Jika status diubah ke paid/unpaid/overdue oleh teknisi, update juga di admin & superadmin (status sama)
         // (Status invoice memang satu kolom, jadi update otomatis terlihat di semua role)
         return redirect()->back()->with('success', 'Status invoice berhasil diperbarui.');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            Excel::import(new CustomersImport, $request->file('file'));
+            return redirect()->back()->with('success', 'Data pelanggan berhasil diimport!');
+        } catch (\Exception $e) {
+            Log::error('Import error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal import: ' . $e->getMessage());
+        }
     }
 } 

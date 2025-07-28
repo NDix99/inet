@@ -130,3 +130,5 @@ Route::prefix('technician')->name('technician.')->middleware(['auth', 'role:tech
     // Tambahkan route untuk update status lunas/belum lunas
     Route::put('/invoices/{invoice}/status', [TechnicianController::class, 'invoiceUpdateStatus'])->name('invoices.update.status');
 });
+
+Route::post('technician/customers/import', [App\Http\Controllers\TechnicianController::class, 'import'])->name('technician.customers.import');

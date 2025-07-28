@@ -107,7 +107,7 @@
             <div class="row mb-2">
                 <div class="col-md-9"></div>
                 <div class="col-md-3 d-flex justify-content-end align-items-center">
-                    <label for="teknisi-filter" class="mr-2 mb-0">Teknisi:</label>
+                    <label for="teknisi-filter" class="mr-2 mb-0">Filter Teknisi:</label>
                     <select id="teknisi-filter" class="form-control form-control-sm w-auto">
                         <option value="">Semua</option>
                         @php
@@ -413,13 +413,40 @@
             }
         }
 
-        /* Table responsive improvements */
+        /* Table responsive improvements - PERBAIKAN UTAMA */
         .table-responsive {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .table th, .table td {
-            white-space: nowrap;
+        /* Hapus white-space nowrap untuk mobile */
+        @media (max-width: 768px) {
+            .table th, .table td {
+                white-space: normal;
+                min-width: 120px;
+            }
+            
+            /* Kolom tertentu bisa lebih kecil */
+            .table th:first-child, .table td:first-child {
+                min-width: 80px;
+            }
+            
+            .table th:last-child, .table td:last-child {
+                min-width: 100px;
+            }
+            
+            /* Kolom aksi lebih kecil di mobile */
+            .btn-group .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Desktop tetap menggunakan nowrap */
+        @media (min-width: 769px) {
+            .table th, .table td {
+                white-space: nowrap;
+            }
         }
 
         /* Text utilities */
@@ -434,6 +461,31 @@
         .mb-0 {
             margin-bottom: 0 !important;
         }
+
+        /* Mobile-specific table improvements */
+        @media (max-width: 576px) {
+            .table-responsive {
+                border: none;
+            }
+            
+            .table {
+                font-size: 0.875rem;
+            }
+            
+            .badge {
+                font-size: 0.75rem;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.4rem;
+                font-size: 0.7rem;
+            }
+            
+            /* Sembunyikan beberapa elemen di mobile */
+            .d-mobile-none {
+                display: none !important;
+            }
+        }
     </style>
 @stop
 
@@ -443,6 +495,8 @@
             var table = $('#customers-table').DataTable({
                 responsive: true,
                 autoWidth: false,
+                scrollX: true,
+                scrollCollapse: true,
                 language: {
                     url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}'
                 },
@@ -473,7 +527,11 @@
                     }
                 ],
                 columnDefs: [
-                    { targets: [8], visible: false } // Sembunyikan kolom filter teknisi
+                    { targets: [8], visible: false }, // Sembunyikan kolom filter teknisi
+                    { 
+                        targets: [0, 1, 2, 3, 4, 5, 6, 7], // Semua kolom kecuali filter
+                        responsivePriority: [1, 2, 3, 4, 5, 6, 7, 8]
+                    }
                 ]
             });
 
@@ -532,6 +590,23 @@
                     table.column(8).search('^' + val + '$', true, false).draw();
                 }
             });
+
+            // Mobile-specific improvements
+            function handleMobileView() {
+                if (window.innerWidth <= 768) {
+                    // Enable horizontal scroll for table
+                    $('.table-responsive').css('overflow-x', 'auto');
+                    
+                    // Adjust table column widths for mobile
+                    $('.table th, .table td').css('min-width', '120px');
+                    $('.table th:first-child, .table td:first-child').css('min-width', '80px');
+                    $('.table th:last-child, .table td:last-child').css('min-width', '100px');
+                }
+            }
+
+            // Call on load and resize
+            handleMobileView();
+            $(window).resize(handleMobileView);
         });
     </script>
 @stop

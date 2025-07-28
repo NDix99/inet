@@ -8,6 +8,13 @@
         <a href="{{ route('technician.customers.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Tambah Pelanggan
         </a>
+        <form action="{{ route('technician.customers.import') }}" method="POST" enctype="multipart/form-data" style="display:inline;">
+            @csrf
+            <input type="file" name="file" accept=".xlsx,.xls" required>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Import Excel
+            </button>
+        </form>
     </div>
 @stop
 
