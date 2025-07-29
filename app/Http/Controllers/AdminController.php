@@ -76,7 +76,7 @@ class AdminController extends Controller
      */
     public function customerIndex()
     {
-        $customers = Customer::all();
+        $customers = Customer::with('package')->latest()->paginate(20);
         return view('admin.customer.index', compact('customers'));
     }
 
@@ -252,7 +252,7 @@ class AdminController extends Controller
      */
     public function invoiceIndex()
     {
-        $invoices = Invoice::with('customer')->latest()->get();
+        $invoices = Invoice::with('customer')->latest()->paginate(20);
         return view('admin.invoice.index', compact('invoices'));
     }
 

@@ -323,8 +323,7 @@ class SuperAdminController extends Controller
      */
     public function invoiceIndex()
     {
-        $invoices = Invoice::with(['customer', 'package', 'creator'])->get();
-
+        $invoices = Invoice::with('customer')->latest()->paginate(20);
         return view('superadmin.invoice.index', compact('invoices'));
     }
 
@@ -646,7 +645,7 @@ class SuperAdminController extends Controller
      */
     public function customerIndex()
     {
-        $customers = Customer::with(['package', 'creator'])->get();
+        $customers = Customer::with(['package', 'creator'])->latest()->paginate(20);
         return view('superadmin.customer.index', compact('customers'));
     }
 

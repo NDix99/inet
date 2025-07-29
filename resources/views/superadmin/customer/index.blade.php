@@ -276,6 +276,10 @@
                     </tbody>
                 </table>
             </div>
+            {{-- Tambahkan pagination di bawah tabel --}}
+            <div class="d-flex justify-content-center mt-3">
+                {{ $customers->links() }}
+            </div>
         </div>
     </div>
 
