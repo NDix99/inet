@@ -119,6 +119,17 @@
                     </select>
                 </div>
             </div>
+            <div class="row mb-2">
+                <div class="col-md-9"></div>
+                <div class="col-md-3 d-flex justify-content-end align-items-center">
+                    <label for="status-filter" class="mr-2 mb-0">Filter Status:</label>
+                    <select id="status-filter" class="form-control form-control-sm w-auto">
+                        <option value="">Semua</option>
+                        <option value="active">Aktif</option>
+                        <option value="inactive">Tidak Aktif</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table id="customers-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -588,6 +599,18 @@
                     table.column(8).search('').draw(); // Kolom ke-9 (kolom tersembunyi)
                 } else {
                     table.column(8).search('^' + val + '$', true, false).draw();
+                }
+            });
+
+            // Filter berdasarkan status
+            $('#status-filter').on('change', function() {
+                var val = $(this).val();
+                if (val === "") {
+                    table.column(5).search('').draw(); // Kolom Status (index 5)
+                } else if (val === "active") {
+                    table.column(5).search('Aktif').draw();
+                } else if (val === "inactive") {
+                    table.column(5).search('Tidak Aktif').draw();
                 }
             });
 
