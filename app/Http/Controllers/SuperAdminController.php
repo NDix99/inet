@@ -323,8 +323,22 @@ class SuperAdminController extends Controller
      */
     public function invoiceIndex()
     {
+        // Data untuk pagination
         $invoices = Invoice::with('customer')->latest()->paginate(20);
-        return view('superadmin.invoice.index', compact('invoices'));
+        
+        // Data untuk statistik (total keseluruhan)
+        $totalInvoices = Invoice::count();
+        $paidInvoices = Invoice::where('status', 'paid')->count();
+        $unpaidInvoices = Invoice::where('status', 'unpaid')->count();
+        $overdueInvoices = Invoice::where('status', 'overdue')->count();
+        
+        return view('superadmin.invoice.index', compact(
+            'invoices',
+            'totalInvoices',
+            'paidInvoices',
+            'unpaidInvoices',
+            'overdueInvoices'
+        ));
     }
 
     /**
@@ -645,8 +659,22 @@ class SuperAdminController extends Controller
      */
     public function customerIndex()
     {
+        // Data untuk pagination
         $customers = Customer::with(['package', 'creator'])->latest()->paginate(20);
-        return view('superadmin.customer.index', compact('customers'));
+        
+        // Data untuk statistik (total keseluruhan)
+        $totalCustomers = Customer::count();
+        $activeCustomers = Customer::where('is_active', true)->count();
+        $inactiveCustomers = Customer::where('is_active', false)->count();
+        $newCustomersThisMonth = Customer::where('created_at', '>=', now()->startOfMonth())->count();
+        
+        return view('superadmin.customer.index', compact(
+            'customers',
+            'totalCustomers',
+            'activeCustomers', 
+            'inactiveCustomers',
+            'newCustomersThisMonth'
+        ));
     }
 
     /**

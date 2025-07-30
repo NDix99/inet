@@ -35,7 +35,7 @@
                 <span class="info-box-icon"><i class="fas fa-users"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Total Pelanggan</span>
-                    <span class="info-box-number">{{ $customers->count() }}</span>
+                    <span class="info-box-number">{{ $totalCustomers }}</span>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Pelanggan Aktif</span>
-                    <span class="info-box-number">{{ $customers->where('is_active', true)->count() }}</span>
+                    <span class="info-box-number">{{ $activeCustomers }}</span>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Pelanggan Nonaktif</span>
-                    <span class="info-box-number">{{ $customers->where('is_active', false)->count() }}</span>
+                    <span class="info-box-number">{{ $inactiveCustomers }}</span>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 <span class="info-box-icon"><i class="fas fa-calendar-alt"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Terdaftar Bulan Ini</span>
-                    <span class="info-box-number">{{ $customers->where('created_at', '>=', now()->startOfMonth())->count() }}</span>
+                    <span class="info-box-number">{{ $newCustomersThisMonth }}</span>
                 </div>
             </div>
         </div>
@@ -75,7 +75,7 @@
             </h3>
             <div class="card-tools">
                 <span class="badge badge-info mr-2">
-                    <i class="fas fa-search"></i> Cari & Filter
+                    <i class="fas fa-list"></i> {{ $totalCustomers }} Pelanggan
                 </span>
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>

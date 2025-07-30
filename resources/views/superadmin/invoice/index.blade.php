@@ -30,7 +30,7 @@
                 <span class="info-box-icon"><i class="fas fa-file-invoice"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Total Invoice</span>
-                    <span class="info-box-number">{{ $invoices->count() }}</span>
+                    <span class="info-box-number">{{ $totalInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -39,7 +39,7 @@
                 <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Invoice Lunas</span>
-                    <span class="info-box-number">{{ $invoices->where('status', 'paid')->count() }}</span>
+                    <span class="info-box-number">{{ $paidInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -48,7 +48,7 @@
                 <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Belum Lunas</span>
-                    <span class="info-box-number">{{ $invoices->where('status', 'unpaid')->count() }}</span>
+                    <span class="info-box-number">{{ $unpaidInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
                 <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Terlambat</span>
-                    <span class="info-box-number">{{ $invoices->where('status', 'overdue')->count() }}</span>
+                    <span class="info-box-number">{{ $overdueInvoices }}</span>
                 </div>
             </div>
         </div>

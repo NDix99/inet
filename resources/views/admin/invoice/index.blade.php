@@ -103,7 +103,7 @@
                 <span class="info-box-icon"><i class="fas fa-file-invoice"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Total Invoice</span>
-                    <span class="info-box-number">{{ $invoices->count() }}</span>
+                    <span class="info-box-number">{{ $totalInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
                 <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Lunas</span>
-                    <span class="info-box-number">{{ $invoices->where('status', 'paid')->count() }}</span>
+                    <span class="info-box-number">{{ $paidInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -121,7 +121,7 @@
                 <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Belum Lunas</span>
-                    <span class="info-box-number">{{ $invoices->where('status', 'unpaid')->count() }}</span>
+                    <span class="info-box-number">{{ $unpaidInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -130,7 +130,7 @@
                 <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Terlambat</span>
-                    <span class="info-box-number">{{ $invoices->where('status', 'overdue')->count() }}</span>
+                    <span class="info-box-number">{{ $overdueInvoices }}</span>
                 </div>
             </div>
         </div>
@@ -163,7 +163,7 @@
             </h3>
             <div class="card-tools">
                 <span class="badge badge-primary mr-2">
-                    <i class="fas fa-list"></i> {{ $invoices->count() }} Invoice
+                    <i class="fas fa-list"></i> {{ $totalInvoices }} Invoice
                 </span>
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>

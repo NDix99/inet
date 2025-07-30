@@ -35,7 +35,7 @@
                 <span class="info-box-icon"><i class="fas fa-users"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Total Pelanggan</span>
-                    <span class="info-box-number">{{ $customers->count() }}</span>
+                    <span class="info-box-number">{{ $totalCustomers }}</span>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Pelanggan Aktif</span>
-                    <span class="info-box-number">{{ $customers->where('is_active', true)->count() }}</span>
+                    <span class="info-box-number">{{ $activeCustomers }}</span>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Pelanggan Non-Aktif</span>
-                    <span class="info-box-number">{{ $customers->where('is_active', false)->count() }}</span>
+                    <span class="info-box-number">{{ $inactiveCustomers }}</span>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 <span class="info-box-icon"><i class="fas fa-user-plus"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Baru Bulan Ini</span>
-                    <span class="info-box-number">{{ $customers->where('created_at', '>=', now()->startOfMonth())->count() }}</span>
+                    <span class="info-box-number">{{ $newCustomersThisMonth }}</span>
                 </div>
             </div>
         </div>
@@ -95,7 +95,7 @@
             </h3>
             <div class="card-tools">
                 <span class="badge badge-primary mr-2">
-                    <i class="fas fa-list"></i> {{ $customers->count() }} Pelanggan
+                    <i class="fas fa-list"></i> {{ $totalCustomers }} Pelanggan
                 </span>
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
@@ -110,11 +110,8 @@
                     <label for="teknisi-filter" class="mr-2 mb-0">Filter Teknisi:</label>
                     <select id="teknisi-filter" class="form-control form-control-sm w-auto">
                         <option value="">Semua</option>
-                        @php
-                            $teknisiList = $customers->pluck('creator.name')->unique()->filter()->values();
-                        @endphp
-                        @foreach($teknisiList as $teknisi)
-                            <option value="{{ $teknisi }}">{{ $teknisi }}</option>
+                        @foreach($allTechnicians as $technician)
+                            <option value="{{ $technician->name }}">{{ $technician->name }}</option>
                         @endforeach
                     </select>
                 </div>

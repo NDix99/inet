@@ -76,8 +76,28 @@ class AdminController extends Controller
      */
     public function customerIndex()
     {
-        $customers = Customer::with('package')->latest()->paginate(20);
-        return view('admin.customer.index', compact('customers'));
+        // Data untuk pagination
+        $customers = Customer::with(['package', 'creator'])->latest()->paginate(20);
+        
+        // Data untuk statistik (total keseluruhan)
+        $totalCustomers = Customer::count();
+        $activeCustomers = Customer::where('is_active', true)->count();
+        $inactiveCustomers = Customer::where('is_active', false)->count();
+        $newCustomersThisMonth = Customer::where('created_at', '>=', now()->startOfMonth())->count();
+        
+        // Data untuk filter teknisi (semua teknisi di database)
+        $allTechnicians = User::whereHas('role', function ($query) {
+            $query->where('name', 'technician');
+        })->get();
+        
+        return view('admin.customer.index', compact(
+            'customers',
+            'totalCustomers',
+            'activeCustomers', 
+            'inactiveCustomers',
+            'newCustomersThisMonth',
+            'allTechnicians'
+        ));
     }
 
     /**
@@ -252,8 +272,22 @@ class AdminController extends Controller
      */
     public function invoiceIndex()
     {
+        // Data untuk pagination
         $invoices = Invoice::with('customer')->latest()->paginate(20);
-        return view('admin.invoice.index', compact('invoices'));
+        
+        // Data untuk statistik (total keseluruhan)
+        $totalInvoices = Invoice::count();
+        $paidInvoices = Invoice::where('status', 'paid')->count();
+        $unpaidInvoices = Invoice::where('status', 'unpaid')->count();
+        $overdueInvoices = Invoice::where('status', 'overdue')->count();
+        
+        return view('admin.invoice.index', compact(
+            'invoices',
+            'totalInvoices',
+            'paidInvoices',
+            'unpaidInvoices',
+            'overdueInvoices'
+        ));
     }
 
     /**
