@@ -95,6 +95,25 @@
             </div>
         </div>
     </div>
+    
+    <!-- Total Revenue Card -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-12 col-sm-12 col-12 mb-3">
+            <div class="info-box bg-gradient-info">
+                <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Total Revenue</span>
+                    <span class="info-box-number">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</span>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: 100%"></div>
+                    </div>
+                    <span class="progress-description">
+                        <i class="fas fa-calendar-alt"></i> Periode {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Chart Section dihapus -->
     <!-- Detail Invoice Table -->

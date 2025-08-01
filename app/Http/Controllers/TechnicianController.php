@@ -228,13 +228,15 @@ class TechnicianController extends Controller
 
         $totalFee = $invoices->where('status', 'paid')->sum('technician_fee_amount');
         $pendingFee = $invoices->whereIn('status', ['unpaid', 'overdue'])->sum('technician_fee_amount');
+        $totalRevenue = $invoices->sum('base_price'); // Tambahkan perhitungan total revenue
 
         return view('technician.financial.report', compact(
             'invoices',
             'startDate',
             'endDate',
             'totalFee',
-            'pendingFee'
+            'pendingFee',
+            'totalRevenue' // Tambahkan totalRevenue ke compact
         ));
     }
 
