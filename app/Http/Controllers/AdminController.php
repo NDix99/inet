@@ -476,8 +476,8 @@ class AdminController extends Controller
                     // Ambil data paket
                     $package = $invoice->package;
                     
-                    // Harga dasar sebelum PPN menggunakan accessor base_price
-                    $basePrice = $invoice->base_price ?? 0;
+                    // Harga dasar dari package (bukan dari invoice)
+                    $basePrice = $package ? $package->base_price : 0;
                     
                     // Hitung fee berdasarkan persentase dari paket
                     $feePercentage = $package ? $package->technician_fee_percentage : 0;
@@ -490,8 +490,8 @@ class AdminController extends Controller
                     // Tambahkan ke total
                     $technicianFee += $calculatedFee;
                     $technicianPPN += $invoice->tax_amount ?? 0;
-                    $technicianRevenue += $basePrice;
-                    $technicianPtFee += $ptFeeAmount; // Tambahkan ke total PT fee
+                    $technicianRevenue += $basePrice; // Sekarang menggunakan base_price dari package
+                    $technicianPtFee += $ptFeeAmount;
                     $invoiceCount++;
                     
                     // Simpan detail untuk tampilan
@@ -499,7 +499,7 @@ class AdminController extends Controller
                         'invoice_number' => $invoice->invoice_number,
                         'customer_name' => $customer->name,
                         'package_name' => $package ? $package->name : 'Tidak ada paket',
-                        'base_price' => $basePrice,
+                        'base_price' => $basePrice, // Sekarang menggunakan base_price dari package
                         'fee_percentage' => $feePercentage,
                         'fee_amount' => $calculatedFee,
                         'pt_fee_percentage' => $ptFeePercentage,
@@ -626,8 +626,8 @@ class AdminController extends Controller
                     // Ambil data paket
                     $package = $invoice->package;
                     
-                    // Harga dasar sebelum PPN menggunakan accessor base_price
-                    $basePrice = $invoice->base_price ?? 0;
+                    // Harga dasar dari package (bukan dari invoice)
+                    $basePrice = $package ? $package->base_price : 0;
                     
                     // Hitung fee berdasarkan persentase dari paket
                     $feePercentage = $package ? $package->technician_fee_percentage : 0;
@@ -640,7 +640,7 @@ class AdminController extends Controller
                     // Tambahkan ke total
                     $technicianFee += $calculatedFee;
                     $technicianPPN += $invoice->tax_amount ?? 0;
-                    $technicianRevenue += $basePrice;
+                    $technicianRevenue += $basePrice; // Sekarang menggunakan base_price dari package
                     $technicianPtFee += $ptFeeAmount; // Tambahkan ke total PT fee
                     $invoiceCount++;
                     
@@ -649,7 +649,7 @@ class AdminController extends Controller
                         'invoice_number' => $invoice->invoice_number,
                         'customer_name' => $customer->name,
                         'package_name' => $package ? $package->name : 'Tidak ada paket',
-                        'base_price' => $basePrice,
+                        'base_price' => $basePrice, // Sekarang menggunakan base_price dari package
                         'fee_percentage' => $feePercentage,
                         'fee_amount' => $calculatedFee,
                         'pt_fee_percentage' => $ptFeePercentage,
