@@ -215,17 +215,18 @@
             </div>
             <div style="width: 40%;">
                 <table>
-                    <tr>
-                        <th>Total:</th>
-                        <td class="text-right">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</td>
-                    </tr>
+
                     <tr>
                         <th>Harga Dasar:</th>
-                        <td class="text-right">Rp {{ number_format($invoice->base_price, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($invoice->package->base_price ?? 0, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
                         <th>PPN (11%):</th>
                         <td class="text-right">Rp {{ number_format($invoice->tax_amount, 0, ',', '.') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total:</th>
+                        <td class="text-right">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
                         <td colspan="2" style="text-align: right; font-style: italic; font-size: 12px; color: #6c757d; border-bottom: none;">
