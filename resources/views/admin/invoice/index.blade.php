@@ -842,35 +842,14 @@
             $('#invoices-table').DataTable({
                 responsive: true,
                 autoWidth: false,
-                language: {
-                    url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}'
-                },
-                order: [[2, "desc"]], // Urutkan berdasarkan tanggal invoice (descending)
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        text: '<i class="fas fa-copy"></i> Salin',
-                        className: 'btn btn-sm btn-secondary'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-sm btn-success'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-sm btn-danger'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-sm btn-info'
-                    }
-                ]
+                paging: false,        // nonaktifkan pagination DataTables
+                info: false,          // nonaktifkan teks "Menampilkan ..."
+                lengthChange: false,  // nonaktifkan dropdown jumlah baris
+                language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
+                order: [[2, "desc"]],
+                dom: '<"row"<"col-sm-12 col-md-6"f>>' +  // hilangkan 'l'
+                     '<"row"<"col-sm-12"tr>>'            // hilangkan 'i' & 'p'
+                // buttons: [ ... ] // tetap jika ingin export/print
             });
             
             // Add hover effects to info boxes

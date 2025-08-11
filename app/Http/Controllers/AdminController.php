@@ -269,11 +269,24 @@ class AdminController extends Controller
      */
     public function technicianIndex()
     {
-        $technicians = User::whereHas('role', function ($query) {
+        $baseQuery = User::whereHas('role', function ($query) {
             $query->where('name', 'technician');
-        })->paginate(20);
-        
-        return view('admin.technician.index', compact('technicians'));
+        });
+
+        $technicians = (clone $baseQuery)->paginate(20);
+
+        $totalTechnicians    = (clone $baseQuery)->count();
+        $activeTechnicians   = (clone $baseQuery)->where('is_active', true)->count();
+        $inactiveTechnicians = (clone $baseQuery)->where('is_active', false)->count();
+        $registeredThisMonth = (clone $baseQuery)->where('created_at', '>=', now()->startOfMonth())->count();
+
+        return view('admin.technician.index', compact(
+            'technicians',
+            'totalTechnicians',
+            'activeTechnicians',
+            'inactiveTechnicians',
+            'registeredThisMonth'
+        ));
     }
 
     /**

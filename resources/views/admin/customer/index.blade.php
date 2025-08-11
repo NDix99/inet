@@ -509,42 +509,14 @@
                 autoWidth: false,
                 scrollX: true,
                 scrollCollapse: true,
-                language: {
-                    url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}'
-                },
-                order: [[1, "asc"]], // Urutkan berdasarkan nama (ascending)
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        text: '<i class="fas fa-copy"></i> Salin',
-                        className: 'btn btn-sm btn-secondary'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-sm btn-success'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-sm btn-danger'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-sm btn-info'
-                    }
-                ],
-                columnDefs: [
-                    { targets: [8], visible: false }, // Sembunyikan kolom filter teknisi
-                    { 
-                        targets: [0, 1, 2, 3, 4, 5, 6, 7], // Semua kolom kecuali filter
-                        responsivePriority: [1, 2, 3, 4, 5, 6, 7, 8]
-                    }
-                ]
+                paging: false,         // nonaktifkan pagination DataTables
+                info: false,           // nonaktifkan teks "Menampilkan ..."
+                lengthChange: false,   // nonaktifkan dropdown jumlah baris
+                language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
+                order: [[1, "asc"]],
+                dom: '<"row"<"col-sm-12 col-md-6"f>>' +   // hilangkan 'l'
+                     '<"row"<"col-sm-12"tr>>'             // hilangkan 'i' & 'p'
+                // buttons: [ ... ] // tetap jika diperlukan
             });
 
             // Add hover effects to info boxes

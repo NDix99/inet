@@ -35,7 +35,7 @@
                 <span class="info-box-icon"><i class="fas fa-users"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Total Teknisi</span>
-                    <span class="info-box-number">{{ $technicians->count() }}</span>
+                    <span class="info-box-number">{{ $totalTechnicians }}</span>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Teknisi Aktif</span>
-                    <span class="info-box-number">{{ $technicians->where('is_active', true)->count() }}</span>
+                    <span class="info-box-number">{{ $activeTechnicians }}</span>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Teknisi Nonaktif</span>
-                    <span class="info-box-number">{{ $technicians->where('is_active', false)->count() }}</span>
+                    <span class="info-box-number">{{ $inactiveTechnicians }}</span>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 <span class="info-box-icon"><i class="fas fa-calendar-alt"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Terdaftar Bulan Ini</span>
-                    <span class="info-box-number">{{ $technicians->where('created_at', '>=', now()->startOfMonth())->count() }}</span>
+                    <span class="info-box-number">{{ $registeredThisMonth }}</span>
                 </div>
             </div>
         </div>
@@ -95,7 +95,7 @@
             </h3>
             <div class="card-tools">
                 <span class="badge badge-success mr-2">
-                    <i class="fas fa-list"></i> {{ $technicians->count() }} Teknisi
+                    <i class="fas fa-list"></i> {{ $totalTechnicians }} Teknisi
                 </span>
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
@@ -336,6 +336,13 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted">
+                    Menampilkan {{ $technicians->firstItem() ?? 0 }}–{{ $technicians->lastItem() ?? 0 }} dari {{ $technicians->total() }} teknisi
+                </small>
+                {{ $technicians->onEachSide(1)->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 
@@ -528,35 +535,15 @@
             $('#technicians-table').DataTable({
                 responsive: true,
                 autoWidth: false,
-                language: {
-                    url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}'
-                },
-                order: [[1, "asc"]], // Urutkan berdasarkan nama (ascending)
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        text: '<i class="fas fa-copy"></i> Salin',
-                        className: 'btn btn-sm btn-secondary'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-sm btn-success'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-sm btn-danger'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-sm btn-info'
-                    }
-                ]
+                paging: false,          // matikan pagination DataTables
+                info: false,            // matikan text "Menampilkan x sampai y"
+                lengthChange: false,    // matikan dropdown jumlah baris
+                language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
+                order: [[1, "asc"]],
+                dom: '<"row"<"col-sm-12 col-md-6"f>>' +   // hilangkan 'l'
+                     '<"row"<"col-sm-12"tr>>'             // hilangkan 'i' dan 'p'
+                // Jika tombol export dipakai, tambahkan 'B' ke dom dan pastikan assets Buttons ter-load.
+                // buttons: [ ... ] // opsional
             });
             
             // Add hover effects to info boxes
