@@ -118,7 +118,6 @@
                             <th>Nama Paket</th>
                             <th>Tipe</th>
                             <th>Harga (Termasuk PPN 11%)</th>
-                            <th>Fee Teknisi</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -273,7 +272,7 @@
                                                                             <i class="fas fa-percentage"></i>
                                                                         </div>
                                                                         <div>
-                                                                            <small class="text-muted">Fee Teknisi</small>
+                                                                            <small class="text-muted"></small>
                                                                             <div class="font-weight-bold">
                                                                                 @if($package->technician_fee_percentage)
                                                                                     {{ $package->technician_fee_percentage }}%
@@ -281,7 +280,7 @@
                                                                                         Rp {{ number_format($package->technician_fee_amount, 0, ',', '.') }}
                                                                                     </div>
                                                                                 @else
-                                                                                    <span class="text-muted">Belum diatur</span>
+                                                                                    
                                                                                 @endif
                                                                             </div>
                                                                         </div>
