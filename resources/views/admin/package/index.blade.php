@@ -172,9 +172,6 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="{{ route('admin.packages.edit', $package) }}" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-percentage"></i> Atur Fee
-                                        </a>
                                         <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#detail-modal-{{ $package->id }}">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -306,9 +303,7 @@
                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                                             <i class="fas fa-times"></i> Tutup
                                                         </button>
-                                                        <a href="{{ route('admin.packages.edit', $package) }}" class="btn btn-warning">
-                                                            <i class="fas fa-percentage"></i> Atur Fee Teknisi
-                                                        </a>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>

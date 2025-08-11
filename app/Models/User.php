@@ -24,6 +24,8 @@ class User extends Authenticatable
         'role_id',
         'phone',
         'is_active',
+        'technician_fee_percentage',
+        'technician_fee_amount',
     ];
 
     /**
@@ -45,6 +47,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'technician_fee_percentage' => 'decimal:2',
+        'technician_fee_amount' => 'decimal:2',
     ];
     
     /**
@@ -99,5 +103,30 @@ class User extends Authenticatable
     public function invoices()
     {
         return $this->hasMany(Invoice::class, 'created_by');
+    }
+
+    /**
+     * Hitung fee teknisi berdasarkan harga paket
+     */
+    public function calculateTechnicianFee($packagePrice)
+    {
+        if ($this->technician_fee_percentage > 0) {
+            // Hitung harga dasar (sebelum PPN)
+            $ppnRate = 0.11;
+            $priceBeforeTax = round($packagePrice / (1 + $ppnRate), 2);
+            
+            // Hitung fee berdasarkan persentase
+            $feeAmount = round(($priceBeforeTax * $this->technician_fee_percentage) / 100, 2);
+            
+            return [
+                'percentage' => $this->technician_fee_percentage,
+                'amount' => $feeAmount
+            ];
+        }
+        
+        return [
+            'percentage' => 0,
+            'amount' => 0
+        ];
     }
 }

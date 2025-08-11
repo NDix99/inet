@@ -101,18 +101,22 @@ class AdminController extends Controller
     }
 
     /**
-     * Menampilkan form tambah pelanggan.
+     * Menampilkan form pembuatan pelanggan.
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function customerCreate()
     {
-        $packages = Package::all();
-        return view('admin.customer.create', compact('packages'));
+        $packages = Package::where('is_active', true)->get();
+        $technicians = User::whereHas('role', function ($query) {
+            $query->where('name', 'technician');
+        })->where('is_active', true)->get();
+        
+        return view('admin.customer.create', compact('packages', 'technicians'));
     }
 
     /**
-     * Menyimpan data pelanggan baru.
+     * Menyimpan pelanggan baru.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -121,20 +125,15 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers,email',
+            'email' => 'nullable|email|max:255',
             'phone' => 'required|string|max:20',
             'address' => 'required|string',
             'package_id' => 'required|exists:packages,id',
             'billing_date' => 'required|date',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'created_by' => 'nullable|exists:users,id',
         ]);
 
-        $data = $request->all();
-        $data['created_by'] = Auth::id();
-        $data['is_active'] = true;
-
-        $customer = Customer::create($data);
+        Customer::create($request->all());
 
         return redirect()->route('admin.customers.index')
             ->with('success', 'Pelanggan berhasil ditambahkan.');
@@ -148,8 +147,7 @@ class AdminController extends Controller
      */
     public function customerShow(Customer $customer)
     {
-        $invoices = $customer->invoices()->latest()->get();
-        return view('admin.customer.show', compact('customer', 'invoices'));
+        return view('admin.customer.show', compact('customer'));
     }
 
     /**
@@ -160,8 +158,12 @@ class AdminController extends Controller
      */
     public function customerEdit(Customer $customer)
     {
-        $packages = Package::all();
-        return view('admin.customer.edit', compact('customer', 'packages'));
+        $packages = Package::where('is_active', true)->get();
+        $technicians = User::whereHas('role', function ($query) {
+            $query->where('name', 'technician');
+        })->where('is_active', true)->get();
+        
+        return view('admin.customer.edit', compact('customer', 'packages', 'technicians'));
     }
 
     /**
@@ -175,13 +177,12 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers,email,' . $customer->id,
+            'email' => 'nullable|email|max:255',
             'phone' => 'required|string|max:20',
             'address' => 'required|string',
             'package_id' => 'required|exists:packages,id',
             'billing_date' => 'required|date',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'created_by' => 'nullable|exists:users,id',
         ]);
 
         $customer->update($request->all());
@@ -191,7 +192,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Menghapus data pelanggan.
+     * Menghapus pelanggan.
      *
      * @param  \App\Models\Customer  $customer
      * @return \Illuminate\Http\Response
@@ -199,11 +200,11 @@ class AdminController extends Controller
     public function customerDestroy(Customer $customer)
     {
         // Cek apakah pelanggan memiliki invoice
-        if ($customer->invoices()->count() > 0) {
+        if ($customer->invoices()->exists()) {
             return redirect()->route('admin.customers.index')
-                ->with('error', 'Pelanggan tidak dapat dihapus karena memiliki invoice.');
+                ->with('error', 'Pelanggan tidak dapat dihapus karena memiliki invoice terkait.');
         }
-
+        
         $customer->delete();
 
         return redirect()->route('admin.customers.index')
@@ -245,15 +246,11 @@ class AdminController extends Controller
             'technician_fee_percentage' => 'required|numeric|min:0|max:100',
         ]);
 
-        // Hitung harga dasar (sebelum PPN)
-        $ppnRate = 0.11;
-        $priceBeforeTax = round($package->price / (1 + $ppnRate), 2);
-        
         // Simpan persentase fee teknisi
         $feePercentage = $request->technician_fee_percentage;
         
         // Hitung jumlah fee teknisi (berdasarkan harga dasar)
-        $feeAmount = round(($priceBeforeTax * $feePercentage) / 100, 2);
+        $feeAmount = round(($package->base_price * $feePercentage) / 100, 2);
         
         // Simpan fee teknisi ke database
         $package->update([
@@ -263,6 +260,156 @@ class AdminController extends Controller
 
         return redirect()->route('admin.packages.index')
             ->with('success', 'Fee teknisi berhasil diperbarui.');
+    }
+
+    /**
+     * Menampilkan daftar teknisi.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function technicianIndex()
+    {
+        $technicians = User::whereHas('role', function ($query) {
+            $query->where('name', 'technician');
+        })->paginate(20);
+        
+        return view('admin.technician.index', compact('technicians'));
+    }
+
+    /**
+     * Menampilkan form pembuatan teknisi.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function technicianCreate()
+    {
+        return view('admin.technician.create');
+    }
+
+    /**
+     * Menyimpan teknisi baru.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function technicianStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $technicianRole = Role::where('name', 'technician')->first();
+
+        if (!$technicianRole) {
+            return redirect()->back()->with('error', 'Peran teknisi tidak ditemukan');
+        }
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'],
+            'role_id' => $technicianRole->id,
+            'is_active' => true,
+        ]);
+
+        return redirect()->route('admin.technicians.index')
+            ->with('success', 'Teknisi berhasil ditambahkan');
+    }
+
+    /**
+     * Menampilkan form edit teknisi untuk pengaturan fee.
+     *
+     * @param  \App\Models\User  $technician
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function technicianEdit(User $technician)
+    {
+        // Pastikan user adalah teknisi
+        if (!$technician->isTechnician()) {
+            return redirect()->route('admin.technicians.index')
+                ->with('error', 'User yang dipilih bukan teknisi.');
+        }
+        
+        return view('admin.technician.edit', compact('technician'));
+    }
+
+    /**
+     * Update data teknisi.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $technician
+     * @return \Illuminate\Http\Response
+     */
+    public function technicianUpdate(Request $request, User $technician)
+    {
+        // Pastikan user adalah teknisi
+        if (!$technician->isTechnician()) {
+            return redirect()->route('admin.technicians.index')
+                ->with('error', 'User yang dipilih bukan teknisi.');
+        }
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('users')->ignore($technician->id),
+            ],
+            'password' => 'nullable|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'is_active' => 'boolean',
+            'technician_fee_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        // Update data teknisi
+        $technician->name = $validated['name'];
+        $technician->email = $validated['email'];
+        $technician->phone = $validated['phone'];
+        $technician->is_active = $request->has('is_active');
+        $technician->technician_fee_percentage = $validated['technician_fee_percentage'];
+
+        // Update password jika diisi
+        if (!empty($validated['password'])) {
+            $technician->password = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        }
+
+        // Hitung contoh fee untuk paket Rp 100.000 (harga dasar sekitar Rp 90.090)
+        $examplePackagePrice = 100000;
+        $exampleFee = $technician->calculateTechnicianFee($examplePackagePrice);
+        $technician->technician_fee_amount = $exampleFee['amount'];
+
+        $technician->save();
+
+        return redirect()->route('admin.technicians.index')
+            ->with('success', 'Data teknisi berhasil diperbarui.');
+    }
+
+    /**
+     * Menghapus teknisi.
+     *
+     * @param  \App\Models\User  $technician
+     * @return \Illuminate\Http\Response
+     */
+    public function technicianDestroy(User $technician)
+    {
+        // Cek apakah teknisi memiliki pelanggan
+        $hasCustomers = Customer::where('created_by', $technician->id)->exists();
+        
+        if ($hasCustomers) {
+            return redirect()->route('admin.technicians.index')
+                ->with('error', 'Teknisi tidak dapat dihapus karena memiliki pelanggan terkait.');
+        }
+        
+        $technician->delete();
+
+        return redirect()->route('admin.technicians.index')
+            ->with('success', 'Teknisi berhasil dihapus');
     }
 
     /**
@@ -327,6 +474,9 @@ class AdminController extends Controller
         $customer = Customer::findOrFail($request->customer_id);
         $package = Package::findOrFail($customer->package_id);
         
+        // Mendapatkan teknisi yang membuat invoice
+        $technician = Auth::user();
+        
         // Membuat nomor invoice
         $lastInvoice = Invoice::latest()->first();
         $invoiceNumber = 'INV-' . str_pad(($lastInvoice ? $lastInvoice->id + 1 : 1), 5, '0', STR_PAD_LEFT);
@@ -337,31 +487,16 @@ class AdminController extends Controller
         $data['package_id'] = $customer->package_id;
         $data['created_by'] = Auth::id();
         
-        // Menghitung pajak jika belum diisi
-        if (!isset($data['tax_percentage']) || $data['tax_percentage'] == 0) {
-            $data['tax_percentage'] = 11; // Default PPN 11%
-        }
+        // Hitung fee teknisi berdasarkan harga dasar paket
+        $basePrice = $package->base_price; // Harga dasar (sebelum PPN)
+        $feeAmount = round(($basePrice * $technician->technician_fee_percentage) / 100, 2);
         
-        if (!isset($data['tax_amount']) || $data['tax_amount'] == 0) {
-            $data['tax_amount'] = $data['amount'] * ($data['tax_percentage'] / 100);
-        }
+        $data['technician_fee_percentage'] = $technician->technician_fee_percentage;
+        $data['technician_fee_amount'] = $feeAmount;
         
-        // Mengambil fee teknisi dari paket
-        if (!isset($data['technician_fee_percentage']) || $data['technician_fee_percentage'] == 0) {
-            $data['technician_fee_percentage'] = $package->technician_fee_percentage ?? 0;
-        }
-        
-        if (!isset($data['technician_fee_amount']) || $data['technician_fee_amount'] == 0) {
-            $data['technician_fee_amount'] = $package->technician_fee_amount ?? 0;
-        }
-        
-        // Menghitung total jika belum diisi
-        if (!isset($data['total_amount']) || $data['total_amount'] == 0) {
-            $data['total_amount'] = $data['amount'] + $data['tax_amount'];
-        }
-        
+        // Buat invoice
         $invoice = Invoice::create($data);
-
+        
         return redirect()->route('admin.invoices.show', $invoice)
             ->with('success', 'Invoice berhasil dibuat.');
     }
@@ -378,38 +513,28 @@ class AdminController extends Controller
     }
 
     /**
-     * Menampilkan invoice untuk dicetak.
+     * Menampilkan invoice untuk print.
      *
      * @param  \App\Models\Invoice  $invoice
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function invoicePrint(Invoice $invoice)
     {
-        // Update status cetak admin jika belum tercetak
-        if (!$invoice->is_printed_admin) {
-            $invoice->update([
-                'is_printed_admin' => true,
-                'printed_at_admin' => now(),
-                'printed_by_admin' => Auth::id(),
-            ]);
-        }
         return view('admin.invoice.print', compact('invoice'));
     }
 
     /**
-     * Reset status cetak invoice (is_printed, printed_at, printed_by)
+     * Reset status print invoice.
      *
      * @param  \App\Models\Invoice  $invoice
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\Response
      */
     public function invoiceResetPrintStatus(Invoice $invoice)
     {
-        $invoice->update([
-            'is_printed' => false,
-            'printed_at' => null,
-            'printed_by' => null
-        ]);
-        return redirect()->back()->with('success', 'Status cetak invoice berhasil direset.');
+        $invoice->update(['print_status' => false]);
+        
+        return redirect()->back()
+            ->with('success', 'Status print invoice berhasil direset.');
     }
 
     /**
@@ -422,478 +547,335 @@ class AdminController extends Controller
     public function invoiceUpdateStatus(Request $request, Invoice $invoice)
     {
         $request->validate([
-            'status' => 'required|in:paid,unpaid,overdue',
+            'status' => 'required|in:paid,unpaid,overdue,cancelled',
         ]);
 
-        $invoice->update([
-            'status' => $request->status,
-        ]);
+        $invoice->update(['status' => $request->status]);
 
-        return redirect()->route('admin.invoices.index')
+        return redirect()->back()
             ->with('success', 'Status invoice berhasil diperbarui.');
     }
 
     /**
-     * Menampilkan laporan keuangan untuk Admin.
+     * Menampilkan laporan keuangan.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function financialReport(Request $request)
     {
-        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
-        $paymentStatus = $request->input('payment_status'); // Filter berdasarkan status pembayaran
-
-        // Ambil data teknisi (mitra) dengan total fee dan PPN
-        $technicians = User::whereHas('role', function ($query) {
-            $query->where('name', 'technician');
-        })->with(['customers' => function ($query) use ($startDate, $endDate) {
-            $query->whereHas('invoices', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('invoice_date', [$startDate, $endDate]);
-            });
-        }, 'customers.invoices' => function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('invoice_date', [$startDate, $endDate]);
-        }, 'customers.invoices.package'])->get();
-
-        // Hitung total untuk setiap teknisi
-        $technicianData = [];
-        $totalFee = 0;
-        $totalPPN = 0;
-        $totalRevenue = 0;
-        $totalPtFee = 0;
-
-        foreach ($technicians as $technician) {
-            $technicianFee = 0;
-            $technicianPPN = 0;
-            $technicianRevenue = 0;
-            $technicianPtFee = 0;
-            $invoiceCount = 0;
-            $feeDetails = [];
-
-            foreach ($technician->customers as $customer) {
-                foreach ($customer->invoices as $invoice) {
-                    // Ambil data paket
-                    $package = $invoice->package;
-                    
-                    // Harga dasar dari package (bukan dari invoice)
-                    $basePrice = $package ? $package->base_price : 0;
-                    
-                    // Hitung fee berdasarkan persentase dari paket
-                    $feePercentage = $package ? $package->technician_fee_percentage : 0;
-                    $calculatedFee = $basePrice * ($feePercentage / 100);
-                    
-                    // Hitung fee PT (100% - persentase fee mitra)
-                    $ptFeePercentage = 100 - $feePercentage;
-                    $ptFeeAmount = $basePrice * ($ptFeePercentage / 100);
-                    
-                    // Tambahkan ke total
-                    $technicianFee += $calculatedFee;
-                    $technicianPPN += $invoice->tax_amount ?? 0;
-                    $technicianRevenue += $basePrice; // Sekarang menggunakan base_price dari package
-                    $technicianPtFee += $ptFeeAmount;
-                    $invoiceCount++;
-                    
-                    // Simpan detail untuk tampilan
-                    $feeDetails[] = [
-                        'invoice_number' => $invoice->invoice_number,
-                        'customer_name' => $customer->name,
-                        'package_name' => $package ? $package->name : 'Tidak ada paket',
-                        'base_price' => $basePrice, // Sekarang menggunakan base_price dari package
-                        'fee_percentage' => $feePercentage,
-                        'fee_amount' => $calculatedFee,
-                        'pt_fee_percentage' => $ptFeePercentage,
-                        'pt_fee_amount' => $ptFeeAmount
-                    ];
-                }
-            }
-            
-            // Cek status cetak dan pembayaran dari tabel mitra_reports
-            $mitraReport = \App\Models\MitraReport::where('technician_id', $technician->id)
-                ->where('periode_awal', $startDate)
-                ->where('periode_akhir', $endDate)
-                ->first();
-            
-            $isPrinted = false;
-            $printedAt = null;
-            $isPaid = false;
-            $paymentDate = null;
-            $paymentNotes = null;
-            
-            if ($mitraReport) {
-                $isPrinted = $mitraReport->is_printed;
-                $printedAt = $mitraReport->printed_at;
-                $isPaid = $mitraReport->is_paid;
-                $paymentDate = $mitraReport->payment_date;
-                $paymentNotes = $mitraReport->payment_notes;
-            }
-
-            // Jika ada filter status pembayaran, skip data yang tidak sesuai
-            if ($paymentStatus !== null) {
-                $filterIsPaid = $paymentStatus === 'paid';
-                if ($isPaid !== $filterIsPaid) {
-                    continue; // Skip data yang tidak sesuai filter
-                }
-            }
-
-            $technicianData[] = [
-                'technician' => $technician,
-                'fee' => $technicianFee,
-                'ppn' => $technicianPPN,
-                'revenue' => $technicianRevenue,
-                'invoice_count' => $invoiceCount,
-                'customers_count' => $technician->customers->count(),
-                'fee_details' => $feeDetails,
-                'avg_fee_percentage' => $technicianRevenue > 0 ? ($technicianFee / $technicianRevenue) * 100 : 0,
-                'total_pt_fee' => $technicianPtFee,
-                'is_printed' => $isPrinted,
-                'printed_at' => $printedAt,
-                'is_paid' => $isPaid,
-                'payment_date' => $paymentDate,
-                'payment_notes' => $paymentNotes
-            ];
-
-            $totalFee += $technicianFee;
-            $totalPPN += $technicianPPN;
-            $totalRevenue += $technicianRevenue;
-            $totalPtFee += $technicianPtFee;
-        }
-
-        // Ambil data invoice untuk chart
+        $startDate = $request->get('start_date', now()->startOfMonth());
+        $endDate = $request->get('end_date', now()->endOfMonth());
+        $paymentStatus = $request->get('payment_status', '');
+        
+        // Query untuk mendapatkan data invoice dalam rentang tanggal
         $invoices = Invoice::whereBetween('invoice_date', [$startDate, $endDate])
-            ->with(['customer', 'package'])
-            ->get();
-
+            ->with(['customer', 'package']);
+        
+        // Filter berdasarkan status pembayaran jika ada
+        if ($paymentStatus) {
+            $invoices = $invoices->where('status', $paymentStatus);
+        }
+        
+        $invoices = $invoices->get();
+        
+        // Hitung total pendapatan
+        $totalRevenue = $invoices->sum('total_amount');
+        $totalPaid = $invoices->where('status', 'paid')->sum('total_amount');
+        $totalUnpaid = $invoices->where('status', 'unpaid')->sum('total_amount');
+        $totalOverdue = $invoices->where('status', 'overdue')->sum('total_amount');
+        
+        // Hitung total fee teknisi
+        $totalTechnicianFee = $invoices->sum('technician_fee_amount');
+        
+        // Data untuk chart
+        $dailyRevenue = $invoices->groupBy(function($invoice) {
+            return $invoice->invoice_date->format('Y-m-d');
+        })->map(function($group) {
+            return $group->sum('total_amount');
+        });
+        
+        // Data untuk tabel
+        $invoiceData = $invoices->map(function($invoice) {
+            return [
+                'invoice_number' => $invoice->invoice_number,
+                'customer_name' => $invoice->customer->name,
+                'package_name' => $invoice->package->name,
+                'amount' => $invoice->amount,
+                'tax_amount' => $invoice->tax_amount,
+                'technician_fee_amount' => $invoice->technician_fee_amount,
+                'total_amount' => $invoice->total_amount,
+                'status' => $invoice->status,
+                'invoice_date' => $invoice->invoice_date,
+                'due_date' => $invoice->due_date,
+            ];
+        });
+        
+        // Data untuk mitra (teknisi) - menggunakan struktur yang sesuai dengan view
+        $technicianData = User::whereHas('role', function($query) {
+            $query->where('name', 'technician');
+        })->where('is_active', true)->get()->map(function($technician) use ($invoices, $startDate, $endDate) {
+            $technicianInvoices = $invoices->where('created_by', $technician->id);
+            $customers = $technician->customers;
+            
+            // Hitung revenue dan fee
+            $revenue = $technicianInvoices->sum('total_amount');
+            $fee = $technicianInvoices->sum('technician_fee_amount');
+            $ppn = $technicianInvoices->sum('tax_amount');
+            
+            // Hitung rata-rata fee percentage berdasarkan fee yang sudah disimpan di invoice
+            $totalBasePrice = $technicianInvoices->sum(function($invoice) {
+                return $invoice->package->base_price; // Gunakan harga dasar dari paket
+            });
+            
+            // Jika fee masih 0, coba hitung ulang berdasarkan persentase teknisi
+            if ($fee == 0 && $technician->technician_fee_percentage > 0) {
+                $fee = $technicianInvoices->sum(function($invoice) use ($technician) {
+                    $basePrice = $invoice->package->base_price; // Harga dasar
+                    return round(($basePrice * $technician->technician_fee_percentage) / 100, 2);
+                });
+            }
+            
+            $avgFeePercentage = $totalBasePrice > 0 ? ($fee / $totalBasePrice) * 100 : $technician->technician_fee_percentage;
+            
+            // Hitung fee PT
+            $totalPtFee = $revenue - $fee;
+            
+            // Detail fee untuk modal
+            $feeDetails = $technicianInvoices->map(function($invoice) use ($technician) {
+                $basePrice = $invoice->package->base_price; // Harga dasar dari paket
+                
+                // Jika fee masih 0, hitung ulang
+                $feeAmount = $invoice->technician_fee_amount;
+                if ($feeAmount == 0 && $technician->technician_fee_percentage > 0) {
+                    $feeAmount = round(($basePrice * $technician->technician_fee_percentage) / 100, 2);
+                }
+                
+                $feePercentage = $basePrice > 0 ? ($feeAmount / $basePrice) * 100 : $technician->technician_fee_percentage;
+                
+                return [
+                    'invoice_number' => $invoice->invoice_number,
+                    'base_price' => $basePrice,
+                    'fee_percentage' => $feePercentage,
+                    'fee_amount' => $feeAmount,
+                    'pt_fee_amount' => $basePrice - $feeAmount,
+                ];
+            });
+            
+            // Cek status print dan payment
+            $isPrinted = $technicianInvoices->every(function($invoice) {
+                return $invoice->is_printed;
+            });
+            $isPaid = $technicianInvoices->every(function($invoice) {
+                return $invoice->status === 'paid';
+            });
+            
+            return [
+                'technician' => $technician,
+                'customers_count' => $customers->count(),
+                'invoice_count' => $technicianInvoices->count(),
+                'revenue' => $revenue,
+                'fee' => $fee,
+                'ppn' => $ppn,
+                'avg_fee_percentage' => $avgFeePercentage,
+                'total_pt_fee' => $totalPtFee,
+                'fee_details' => $feeDetails,
+                'is_printed' => $isPrinted,
+                'is_paid' => $isPaid,
+                'printed_at' => $isPrinted ? $technicianInvoices->max('printed_at') : null,
+                'payment_date' => $isPaid ? $technicianInvoices->max('paid_at') : null,
+                'payment_notes' => $technicianInvoices->first()->payment_notes ?? null,
+            ];
+        });
+        
+        // Hitung total fee untuk mitra dan PT
+        $totalFee = $technicianData->sum('fee');
+        $totalPtFee = $totalRevenue - $totalFee;
+        $totalTax = $invoices->sum('tax_amount');
+        $totalPPN = $totalTax; // PPN sama dengan tax
+        
         return view('admin.financial.report', compact(
-            'technicianData',
+            'invoices',
+            'totalRevenue',
+            'totalPaid',
+            'totalUnpaid',
+            'totalOverdue',
+            'totalTechnicianFee',
+            'dailyRevenue',
+            'invoiceData',
             'startDate',
             'endDate',
+            'paymentStatus',
+            'technicianData',
             'totalFee',
-            'totalPPN',
-            'totalRevenue',
             'totalPtFee',
-            'invoices',
-            'paymentStatus'
+            'totalTax',
+            'totalPPN'
         ));
     }
 
     /**
-     * Mencetak laporan keuangan untuk Admin.
+     * Menampilkan laporan keuangan untuk print.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function financialReportPrint(Request $request)
     {
-        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
-        $technicianId = $request->input('technician_id');
-        $paymentStatus = $request->input('payment_status'); // Filter berdasarkan status pembayaran
-
-        // Ambil data teknisi (mitra) dengan total fee dan PPN
-        $technicians = User::whereHas('role', function ($query) {
-            $query->where('name', 'technician');
-        })->with(['customers' => function ($query) use ($startDate, $endDate) {
-            $query->whereHas('invoices', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('invoice_date', [$startDate, $endDate]);
-            });
-        }, 'customers.invoices' => function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('invoice_date', [$startDate, $endDate]);
-        }, 'customers.invoices.package'])->get();
-
-        // Jika ada technician_id, filter hanya untuk teknisi tersebut
-        if ($technicianId) {
-            $technicians = $technicians->where('id', $technicianId);
-        }
-
-        // Hitung total untuk setiap teknisi
-        $technicianData = [];
-        $totalFee = 0;
-        $totalPPN = 0;
-        $totalRevenue = 0;
-        $totalPtFee = 0;
-
-        foreach ($technicians as $technician) {
-            $technicianFee = 0;
-            $technicianPPN = 0;
-            $technicianRevenue = 0;
-            $technicianPtFee = 0;
-            $invoiceCount = 0;
-            $feeDetails = [];
-
-            foreach ($technician->customers as $customer) {
-                foreach ($customer->invoices as $invoice) {
-                    // Ambil data paket
-                    $package = $invoice->package;
-                    
-                    // Harga dasar dari package (bukan dari invoice)
-                    $basePrice = $package ? $package->base_price : 0;
-                    
-                    // Hitung fee berdasarkan persentase dari paket
-                    $feePercentage = $package ? $package->technician_fee_percentage : 0;
-                    $calculatedFee = $basePrice * ($feePercentage / 100);
-                    
-                    // Hitung fee PT (100% - persentase fee mitra)
-                    $ptFeePercentage = 100 - $feePercentage;
-                    $ptFeeAmount = $basePrice * ($ptFeePercentage / 100);
-                    
-                    // Tambahkan ke total
-                    $technicianFee += $calculatedFee;
-                    $technicianPPN += $invoice->tax_amount ?? 0;
-                    $technicianRevenue += $basePrice; // Sekarang menggunakan base_price dari package
-                    $technicianPtFee += $ptFeeAmount; // Tambahkan ke total PT fee
-                    $invoiceCount++;
-                    
-                    // Simpan detail untuk tampilan
-                    $feeDetails[] = [
-                        'invoice_number' => $invoice->invoice_number,
-                        'customer_name' => $customer->name,
-                        'package_name' => $package ? $package->name : 'Tidak ada paket',
-                        'base_price' => $basePrice, // Sekarang menggunakan base_price dari package
-                        'fee_percentage' => $feePercentage,
-                        'fee_amount' => $calculatedFee,
-                        'pt_fee_percentage' => $ptFeePercentage,
-                        'pt_fee_amount' => $ptFeeAmount
-                    ];
-                }
-            }
-            
-            // Cek status cetak dan pembayaran dari tabel mitra_reports
-            $mitraReport = \App\Models\MitraReport::where('technician_id', $technician->id)
-                ->where('periode_awal', $startDate)
-                ->where('periode_akhir', $endDate)
-                ->first();
-            
-            $isPrinted = false;
-            $printedAt = null;
-            $isPaid = false;
-            $paymentDate = null;
-            $paymentNotes = null;
-            
-            if ($mitraReport) {
-                $isPrinted = $mitraReport->is_printed;
-                $printedAt = $mitraReport->printed_at;
-                $isPaid = $mitraReport->is_paid;
-                $paymentDate = $mitraReport->payment_date;
-                $paymentNotes = $mitraReport->payment_notes;
-            }
-
-            // Jika ada filter status pembayaran, skip data yang tidak sesuai
-            if ($paymentStatus !== null) {
-                $filterIsPaid = $paymentStatus === 'paid';
-                if ($isPaid !== $filterIsPaid) {
-                    continue; // Skip data yang tidak sesuai filter
-                }
-            }
-
-            $technicianData[] = [
-                'technician' => $technician,
-                'fee' => $technicianFee,
-                'ppn' => $technicianPPN,
-                'revenue' => $technicianRevenue,
-                'invoice_count' => $invoiceCount,
-                'customers_count' => $technician->customers->count(),
-                'fee_details' => $feeDetails,
-                'avg_fee_percentage' => $technicianRevenue > 0 ? ($technicianFee / $technicianRevenue) * 100 : 0,
-                'total_pt_fee' => $technicianPtFee,
-                'is_printed' => $isPrinted,
-                'printed_at' => $printedAt,
-                'is_paid' => $isPaid,
-                'payment_date' => $paymentDate,
-                'payment_notes' => $paymentNotes
-            ];
-
-            $totalFee += $technicianFee;
-            $totalPPN += $technicianPPN;
-            $totalRevenue += $technicianRevenue;
-            $totalPtFee += $technicianPtFee;
-            
-            // Update atau buat record di tabel mitra_reports
-            if ($technicianId) {
-                // Jika mencetak laporan untuk satu mitra saja
-                $mitraReport = \App\Models\MitraReport::updateOrCreate(
-                    [
-                        'technician_id' => $technician->id,
-                        'periode_awal' => $startDate,
-                        'periode_akhir' => $endDate
-                    ],
-                    [
-                        'total_fee' => $technicianFee,
-                        'total_revenue' => $technicianRevenue,
-                        'total_pt_fee' => $technicianPtFee,
-                        'total_ppn' => $technicianPPN,
-                        'is_printed' => true,
-                        'printed_at' => now(),
-                        'printed_by' => Auth::id()
-                    ]
-                );
-            }
+        $startDate = $request->get('start_date', now()->startOfMonth());
+        $endDate = $request->get('end_date', now()->endOfMonth());
+        $paymentStatus = $request->get('payment_status', '');
+        $technicianId = $request->get('technician_id');
+        
+        // Query untuk mendapatkan data invoice dalam rentang tanggal
+        $invoices = Invoice::whereBetween('invoice_date', [$startDate, $endDate])
+            ->with(['customer', 'package']);
+        
+        // Filter berdasarkan status pembayaran jika ada
+        if ($paymentStatus) {
+            $invoices = $invoices->where('status', $paymentStatus);
         }
         
-        // Jika mencetak laporan untuk semua mitra
-        if (!$technicianId && count($technicians) > 0) {
-            foreach ($technicians as $technician) {
-                $techData = collect($technicianData)->firstWhere('technician.id', $technician->id);
-                if ($techData) {
-                    \App\Models\MitraReport::updateOrCreate(
-                        [
-                            'technician_id' => $technician->id,
-                            'periode_awal' => $startDate,
-                            'periode_akhir' => $endDate
-                        ],
-                        [
-                            'total_fee' => $techData['fee'],
-                            'total_revenue' => $techData['revenue'],
-                            'total_pt_fee' => $techData['total_pt_fee'],
-                            'total_ppn' => $techData['ppn'],
-                            'is_printed' => true,
-                            'printed_at' => now(),
-                            'printed_by' => Auth::id()
-                        ]
-                    );
-                }
-            }
+        // Filter berdasarkan teknisi jika ada
+        if ($technicianId) {
+            $invoices = $invoices->where('created_by', $technicianId);
         }
-
+        
+        $invoices = $invoices->get();
+        
+        // Hitung total pendapatan
+        $totalRevenue = $invoices->sum('total_amount');
+        $totalPaid = $invoices->where('status', 'paid')->sum('total_amount');
+        $totalUnpaid = $invoices->where('status', 'unpaid')->sum('total_amount');
+        $totalOverdue = $invoices->where('status', 'overdue')->sum('total_amount');
+        
+        // Hitung total fee teknisi
+        $totalTechnicianFee = $invoices->sum('technician_fee_amount');
+        
+        // Data untuk chart
+        $dailyRevenue = $invoices->groupBy(function($invoice) {
+            return $invoice->invoice_date->format('Y-m-d');
+        })->map(function($group) {
+            return $group->sum('total_amount');
+        });
+        
+        // Data untuk tabel
+        $invoiceData = $invoices->map(function($invoice) {
+            return [
+                'invoice_number' => $invoice->invoice_number,
+                'customer_name' => $invoice->customer->name,
+                'package_name' => $invoice->package->name,
+                'amount' => $invoice->amount,
+                'tax_amount' => $invoice->tax_amount,
+                'technician_fee_amount' => $invoice->technician_fee_amount,
+                'total_amount' => $invoice->total_amount,
+                'status' => $invoice->status,
+                'invoice_date' => $invoice->invoice_date,
+                'due_date' => $invoice->due_date,
+            ];
+        });
+        
+        // Data untuk mitra (teknisi) - menggunakan struktur yang sesuai dengan view
+        $technicianData = User::whereHas('role', function($query) {
+            $query->where('name', 'technician');
+        })->where('is_active', true)->get()->map(function($technician) use ($invoices, $startDate, $endDate) {
+            $technicianInvoices = $invoices->where('created_by', $technician->id);
+            $customers = $technician->customers;
+            
+            // Hitung revenue dan fee
+            $revenue = $technicianInvoices->sum('total_amount');
+            $fee = $technicianInvoices->sum('technician_fee_amount');
+            $ppn = $technicianInvoices->sum('tax_amount');
+            
+            // Hitung rata-rata fee percentage berdasarkan fee yang sudah disimpan di invoice
+            $totalBasePrice = $technicianInvoices->sum(function($invoice) {
+                return $invoice->total_amount - $invoice->tax_amount;
+            });
+            
+            // Jika fee masih 0, coba hitung ulang berdasarkan persentase teknisi
+            if ($fee == 0 && $technician->technician_fee_percentage > 0) {
+                $fee = $technicianInvoices->sum(function($invoice) use ($technician) {
+                    $feeCalculation = $technician->calculateTechnicianFee($invoice->total_amount);
+                    return $feeCalculation['amount'];
+                });
+            }
+            
+            $avgFeePercentage = $totalBasePrice > 0 ? ($fee / $totalBasePrice) * 100 : $technician->technician_fee_percentage;
+            
+            // Hitung fee PT
+            $totalPtFee = $revenue - $fee;
+            
+            // Detail fee untuk modal
+            $feeDetails = $technicianInvoices->map(function($invoice) use ($technician) {
+                $basePrice = $invoice->total_amount - $invoice->tax_amount;
+                
+                // Jika fee masih 0, hitung ulang
+                $feeAmount = $invoice->technician_fee_amount;
+                if ($feeAmount == 0 && $technician->technician_fee_percentage > 0) {
+                    $feeCalculation = $technician->calculateTechnicianFee($invoice->total_amount);
+                    $feeAmount = $feeCalculation['amount'];
+                }
+                
+                $feePercentage = $basePrice > 0 ? ($feeAmount / $basePrice) * 100 : $technician->technician_fee_percentage;
+                
+                return [
+                    'invoice_number' => $invoice->invoice_number,
+                    'base_price' => $basePrice,
+                    'fee_percentage' => $feePercentage,
+                    'fee_amount' => $feeAmount,
+                    'pt_fee_amount' => $basePrice - $feeAmount,
+                ];
+            });
+            
+            // Cek status print dan payment
+            $isPrinted = $technicianInvoices->every(function($invoice) {
+                return $invoice->is_printed;
+            });
+            $isPaid = $technicianInvoices->every(function($invoice) {
+                return $invoice->status === 'paid';
+            });
+            
+            return [
+                'technician' => $technician,
+                'customers_count' => $customers->count(),
+                'invoice_count' => $technicianInvoices->count(),
+                'revenue' => $revenue,
+                'fee' => $fee,
+                'ppn' => $ppn,
+                'avg_fee_percentage' => $avgFeePercentage,
+                'total_pt_fee' => $totalPtFee,
+                'fee_details' => $feeDetails,
+                'is_printed' => $isPrinted,
+                'is_paid' => $isPaid,
+                'printed_at' => $isPrinted ? $technicianInvoices->max('printed_at') : null,
+                'payment_date' => $isPaid ? $technicianInvoices->max('paid_at') : null,
+                'payment_notes' => $technicianInvoices->first()->payment_notes ?? null,
+            ];
+        });
+        
+        // Hitung total fee untuk mitra dan PT
+        $totalFee = $technicianData->sum('fee');
+        $totalPtFee = $totalRevenue - $totalFee;
+        $totalTax = $invoices->sum('tax_amount');
+        $totalPPN = $totalTax; // PPN sama dengan tax
+        
         return view('admin.financial.print', compact(
-            'technicianData',
+            'invoices',
+            'totalRevenue',
+            'totalPaid',
+            'totalUnpaid',
+            'totalOverdue',
+            'totalTechnicianFee',
+            'dailyRevenue',
+            'invoiceData',
             'startDate',
             'endDate',
+            'paymentStatus',
+            'technicianData',
             'totalFee',
-            'totalPPN',
-            'totalRevenue',
             'totalPtFee',
-            'technicianId',
-            'paymentStatus'
+            'totalTax',
+            'totalPPN'
         ));
-    }
-
-    /**
-     * Menampilkan daftar teknisi.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-    public function technicianIndex()
-    {
-        $technicians = User::whereHas('role', function ($query) {
-            $query->where('name', 'technician');
-        })->get();
-
-        return view('admin.technician.index', compact('technicians'));
-    }
-
-    /**
-     * Menampilkan form untuk membuat teknisi baru.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-    public function technicianCreate()
-    {
-        return view('admin.technician.create');
-    }
-
-    /**
-     * Menyimpan teknisi baru.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function technicianStore(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
-        ]);
-
-        $technicianRole = Role::where('name', 'technician')->first();
-
-        if (!$technicianRole) {
-            return redirect()->back()->with('error', 'Peran teknisi tidak ditemukan');
-        }
-
-        User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'phone' => $validated['phone'],
-            'role_id' => $technicianRole->id,
-            'is_active' => true,
-        ]);
-
-        return redirect()->route('admin.technicians.index')
-            ->with('success', 'Teknisi berhasil ditambahkan');
-    }
-
-    /**
-     * Menampilkan form untuk mengedit teknisi.
-     *
-     * @param  \App\Models\User  $technician
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-    public function technicianEdit(User $technician)
-    {
-        return view('admin.technician.edit', compact('technician'));
-    }
-
-    /**
-     * Memperbarui data teknisi.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $technician
-     * @return \Illuminate\Http\Response
-     */
-    public function technicianUpdate(Request $request, User $technician)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($technician->id),
-            ],
-            'password' => 'nullable|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
-            'is_active' => 'boolean',
-        ]);
-
-        $technician->name = $validated['name'];
-        $technician->email = $validated['email'];
-        $technician->phone = $validated['phone'];
-        $technician->is_active = $request->has('is_active');
-
-        if (!empty($validated['password'])) {
-            $technician->password = Hash::make($validated['password']);
-        }
-
-        $technician->save();
-
-        return redirect()->route('admin.technicians.index')
-            ->with('success', 'Teknisi berhasil diperbarui');
-    }
-
-    /**
-     * Menghapus teknisi.
-     *
-     * @param  \App\Models\User  $technician
-     * @return \Illuminate\Http\Response
-     */
-    public function technicianDestroy(User $technician)
-    {
-        // Cek apakah teknisi memiliki pelanggan
-        $hasCustomers = Customer::where('created_by', $technician->id)->exists();
-        
-        if ($hasCustomers) {
-            return redirect()->route('admin.technicians.index')
-                ->with('error', 'Teknisi tidak dapat dihapus karena memiliki pelanggan terkait.');
-        }
-        
-        $technician->delete();
-
-        return redirect()->route('admin.technicians.index')
-            ->with('success', 'Teknisi berhasil dihapus');
     }
 } 
