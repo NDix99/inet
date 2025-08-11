@@ -396,31 +396,12 @@
                 },
                 responsive: true,
                 autoWidth: false,
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        text: '<i class="fas fa-copy"></i> Salin',
-                        className: 'btn btn-sm btn-secondary'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-sm btn-success'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-sm btn-danger'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-sm btn-info'
-                    }
-                ]
+                paging: false,        // disable DataTables pagination
+                info: false,          // disable "Showing x to y of z entries" text
+                lengthChange: false,  // disable length dropdown
+                dom: '<"row"<"col-sm-12 col-md-6"f>>' +  // remove 'l'
+                     '<"row"<"col-sm-12"tr>>'            // remove 'i' & 'p'
+                // buttons: [ ... ] // keep if needed
             });
             
             // Add hover effects to info boxes
