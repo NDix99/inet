@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Exports\CustomersExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
 {
@@ -209,6 +211,35 @@ class AdminController extends Controller
 
         return redirect()->route('admin.customers.index')
             ->with('success', 'Pelanggan berhasil dihapus.');
+    }
+
+    /**
+     * Export daftar pelanggan ke Excel.
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function exportCustomers(Request $request)
+    {
+        $technicianFilter = $request->get('technician');
+        $statusFilter = $request->get('status');
+        
+        $filename = 'daftar_pelanggan_' . date('Y-m-d_H-i-s');
+        
+        if ($technicianFilter) {
+            $filename .= '_teknisi_' . str_replace(' ', '_', $technicianFilter);
+        }
+        
+        if ($statusFilter) {
+            $filename .= '_status_' . $statusFilter;
+        }
+        
+        $filename .= '.xlsx';
+        
+        return Excel::download(
+            new CustomersExport($technicianFilter, $statusFilter), 
+            $filename
+        );
     }
 
     /**

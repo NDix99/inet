@@ -107,6 +107,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/customers/{customer}/edit', [AdminController::class, 'customerEdit'])->name('customers.edit');
     Route::put('/customers/{customer}', [AdminController::class, 'customerUpdate'])->name('customers.update');
     Route::delete('/customers/{customer}', [AdminController::class, 'customerDestroy'])->name('customers.destroy');
+    
+    // Export customers
+    Route::post('/customers/export', [AdminController::class, 'exportCustomers'])->name('customers.export');
 });
 
 // Route untuk Teknisi

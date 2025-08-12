@@ -104,29 +104,34 @@
         </div>
         
         <div class="card-body">
-            <div class="row mb-2">
-                <div class="col-md-9"></div>
-                <div class="col-md-3 d-flex justify-content-end align-items-center">
-                    <label for="teknisi-filter" class="mr-2 mb-0">Filter Teknisi:</label>
-                    <select id="teknisi-filter" class="form-control form-control-sm w-auto">
-                        <option value="">Semua</option>
-                        @foreach($allTechnicians as $technician)
-                            <option value="{{ $technician->name }}">{{ $technician->name }}</option>
-                        @endforeach
-                    </select>
+            <!-- Filter dan Export Section -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <label for="teknisi-filter" class="mb-0 mr-2">Filter Teknisi:</label>
+                        <select id="teknisi-filter" class="form-control form-control-sm w-auto">
+                            <option value="">Semua</option>
+                            @foreach($allTechnicians as $technician)
+                                <option value="{{ $technician->name }}">{{ $technician->name }}</option>
+                            @endforeach
+                        </select>
+                        
+                        <label for="status-filter" class="mb-0 mr-2 ml-3">Filter Status:</label>
+                        <select id="status-filter" class="form-control form-control-sm w-auto">
+                            <option value="">Semua</option>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Tidak Aktif</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex justify-content-end">
+                    <button type="button" class="btn btn-success btn-sm" id="export-excel-btn">
+                        <i class="fas fa-file-excel mr-1"></i>
+                        Export Excel
+                    </button>
                 </div>
             </div>
-            <div class="row mb-2">
-                <div class="col-md-9"></div>
-                <div class="col-md-3 d-flex justify-content-end align-items-center">
-                    <label for="status-filter" class="mr-2 mb-0">Filter Status:</label>
-                    <select id="status-filter" class="form-control form-control-sm w-auto">
-                        <option value="">Semua</option>
-                        <option value="active">Aktif</option>
-                        <option value="inactive">Tidak Aktif</option>
-                    </select>
-                </div>
-            </div>
+
             <div class="table-responsive">
                 <table id="customers-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -603,6 +608,68 @@
             // Call on load and resize
             handleMobileView();
             $(window).resize(handleMobileView);
+
+            // Handle export button
+            $('#export-excel-btn').on('click', function() {
+                var technicianFilter = $('#teknisi-filter').val();
+                var statusFilter = $('#status-filter').val();
+
+                var url = '{{ route("admin.customers.export") }}';
+                var params = {
+                    technician: technicianFilter,
+                    status: statusFilter
+                };
+
+                window.location.href = url + '?' + $.param(params);
+            });
+
+            // Export Excel functionality
+            $('#export-excel-btn').on('click', function() {
+                var teknisiFilter = $('#teknisi-filter').val();
+                var statusFilter = $('#status-filter').val();
+                
+                // Show loading state
+                var $btn = $(this);
+                var originalText = $btn.html();
+                $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Exporting...');
+                $btn.prop('disabled', true);
+                
+                // Build export URL with filters
+                var exportUrl = '{{ route("admin.customers.export") }}?';
+                var params = [];
+                
+                if (teknisiFilter) {
+                    params.push('technician=' + encodeURIComponent(teknisiFilter));
+                }
+                
+                if (statusFilter) {
+                    params.push('status=' + encodeURIComponent(statusFilter));
+                }
+                
+                exportUrl += params.join('&');
+                
+                // Create temporary form to submit export request
+                var $form = $('<form>', {
+                    'method': 'POST',
+                    'action': exportUrl
+                });
+                
+                $form.append($('<input>', {
+                    'type': 'hidden',
+                    'name': '_token',
+                    'value': '{{ csrf_token() }}'
+                }));
+                
+                $('body').append($form);
+                $form.submit();
+                $form.remove();
+                
+                // Reset button state after a delay
+                setTimeout(function() {
+                    $btn.html(originalText);
+                    $btn.prop('disabled', false);
+                }, 2000);
+            });
         });
     </script>
 @stop
