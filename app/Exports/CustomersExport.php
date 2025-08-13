@@ -18,11 +18,13 @@ class CustomersExport implements FromCollection, WithHeadings, WithMapping, With
 {
     protected $technicianFilter;
     protected $statusFilter;
+    protected $search;
 
-    public function __construct($technicianFilter = null, $statusFilter = null)
+    public function __construct($technicianFilter = null, $statusFilter = null, $search = null)
     {
         $this->technicianFilter = $technicianFilter;
         $this->statusFilter = $statusFilter;
+        $this->search = $search;
     }
 
     public function collection()
@@ -41,6 +43,23 @@ class CustomersExport implements FromCollection, WithHeadings, WithMapping, With
             $query->where('is_active', true);
         } elseif ($this->statusFilter === 'inactive') {
             $query->where('is_active', false);
+        }
+
+        // Pencarian global
+        if (!empty($this->search)) {
+            $search = $this->search;
+            $query->where(function ($sub) use ($search) {
+                $sub->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhereHas('package', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('creator', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
 
         return $query->orderBy('created_at', 'desc')->get();

@@ -76,10 +76,48 @@ class AdminController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function customerIndex()
+    public function customerIndex(Request $request)
     {
-        // Data untuk pagination
-        $customers = Customer::with(['package', 'creator'])->latest()->paginate(20);
+        // Baca filter global dari query string
+        $technicianFilter = $request->query('technician', '');
+        $statusFilter = $request->query('status', '');
+        $search = $request->query('search', '');
+
+        // Query dasar pelanggan + relasi
+        $query = Customer::with(['package', 'creator'])->latest();
+
+        // Terapkan filter teknisi (berdasarkan nama pembuat/creator)
+        if (!empty($technicianFilter)) {
+            $query->whereHas('creator', function ($q) use ($technicianFilter) {
+                $q->where('name', $technicianFilter);
+            });
+        }
+
+        // Terapkan filter status aktif/tidak aktif
+        if ($statusFilter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($statusFilter === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        // Terapkan pencarian global
+        if (!empty($search)) {
+            $query->where(function ($sub) use ($search) {
+                $sub->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhereHas('package', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('creator', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Data untuk pagination (tetap 20 per halaman) dan pertahankan query di pagination links
+        $customers = $query->paginate(20)->appends($request->query());
         
         // Data untuk statistik (total keseluruhan)
         $totalCustomers = Customer::count();
@@ -98,7 +136,10 @@ class AdminController extends Controller
             'activeCustomers', 
             'inactiveCustomers',
             'newCustomersThisMonth',
-            'allTechnicians'
+            'allTechnicians',
+            'technicianFilter',
+            'statusFilter',
+            'search'
         ));
     }
 
@@ -224,6 +265,7 @@ class AdminController extends Controller
     {
         $technicianFilter = $request->get('technician');
         $statusFilter = $request->get('status');
+        $search = $request->get('search');
         
         $filename = 'daftar_pelanggan_' . date('Y-m-d_H-i-s');
         
@@ -235,10 +277,14 @@ class AdminController extends Controller
             $filename .= '_status_' . $statusFilter;
         }
         
+        if ($search) {
+            $filename .= '_cari_' . str_replace(' ', '_', $search);
+        }
+        
         $filename .= '.xlsx';
         
         return Excel::download(
-            new CustomersExport($technicianFilter, $statusFilter), 
+            new CustomersExport($technicianFilter, $statusFilter, $search), 
             $filename
         );
     }

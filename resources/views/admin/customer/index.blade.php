@@ -116,16 +116,28 @@
                         <select id="teknisi-filter" class="form-control form-control-sm w-auto">
                             <option value="">Semua</option>
                             @foreach($allTechnicians as $technician)
-                                <option value="{{ $technician->name }}">{{ $technician->name }}</option>
+                                <option value="{{ $technician->name }}" {{ isset($technicianFilter) && $technicianFilter === $technician->name ? 'selected' : '' }}>{{ $technician->name }}</option>
                             @endforeach
                         </select>
-                        
-                        <label for="status-filter" class="mb-0 mr-2 ml-3">Filter Status:</label>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+                        <label for="status-filter" class="mb-0 mr-2">Filter Status:</label>
                         <select id="status-filter" class="form-control form-control-sm w-auto">
-                            <option value="">Semua</option>
-                            <option value="active">Aktif</option>
-                            <option value="inactive">Tidak Aktif</option>
+                            <option value="" {{ empty($statusFilter) ? 'selected' : '' }}>Semua</option>
+                            <option value="active" {{ (isset($statusFilter) && $statusFilter === 'active') ? 'selected' : '' }}>Aktif</option>
+                            <option value="inactive" {{ (isset($statusFilter) && $statusFilter === 'inactive') ? 'selected' : '' }}>Tidak Aktif</option>
                         </select>
+                        <button type="button" id="reset-filters-btn" class="btn btn-secondary btn-sm ml-2">
+                            <i class="fas fa-undo-alt mr-1"></i> Reset Filter
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex justify-content-md-end align-items-start mt-2 mt-md-0">
+                    <div class="input-group input-group-sm" style="max-width: 320px;">
+                        <input type="text" id="search-input" class="form-control" placeholder="Cari nama, email, telepon, alamat, paket, teknisi..." value="{{ $search ?? '' }}">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" id="search-btn" type="button"><i class="fas fa-search"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,7 +154,7 @@
                             <th>Status</th>
                             <th>Dibuat Oleh</th>
                             <th>Aksi</th>
-                            <th class="d-none">Teknisi Filter</th>
+                            <!-- Kolom teknisi filter tidak dibutuhkan lagi karena filter global via URL -->
                         </tr>
                     </thead>
                     <tbody>
@@ -272,7 +284,6 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="d-none">{{ $customer->creator->name ?? '' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -281,7 +292,7 @@
             
             <!-- Pagination -->
             <div class="d-flex justify-content-center mt-3">
-                {{ $customers->links() }}
+                {{ $customers->appends(request()->query())->links() }}
             </div>
         </div>
     </div>
@@ -468,10 +479,10 @@
                 paging: false,
                 info: false,
                 lengthChange: false,
+                searching: false,
                 language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
                 order: [[1, "asc"]],
-                dom: '<"row"<"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>'
+                dom: '<"row"<"col-sm-12"tr>>'
             });
 
             // Add hover effects to info boxes
@@ -497,27 +508,46 @@
             // Auto-dismiss alerts
             $('.alert').delay(5000).fadeOut(500);
 
-            // Filter by technician
-            $('#teknisi-filter').on('change', function() {
-                var val = $(this).val();
-                if (val === "") {
-                    table.column(8).search('').draw();
-                } else {
-                    table.column(8).search('^' + val + '$', true, false).draw();
-                }
+            // Filter global via query string (reload URL agar berlaku ke pagination & export)
+            function navigateWithParams(modifier) {
+                var params = new URLSearchParams(window.location.search);
+                modifier(params);
+                var newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                window.location.href = newUrl;
+            }
+
+            function applyGlobalFilters() {
+                var teknisi = $('#teknisi-filter').val();
+                var status = $('#status-filter').val();
+                navigateWithParams(function(params) {
+                    if (teknisi) { params.set('technician', teknisi); } else { params.delete('technician'); }
+                    if (status) { params.set('status', status); } else { params.delete('status'); }
+                    params.delete('page');
+                });
+            }
+
+            $('#teknisi-filter').on('change', applyGlobalFilters);
+            $('#status-filter').on('change', applyGlobalFilters);
+
+            // Reset filters
+            $('#reset-filters-btn').on('click', function() {
+                $('#teknisi-filter').val('');
+                $('#status-filter').val('');
+                $('#search-input').val('');
+                var baseUrl = window.location.pathname;
+                window.location.href = baseUrl;
             });
 
-            // Filter by status
-            $('#status-filter').on('change', function() {
-                var val = $(this).val();
-                if (val === "") {
-                    table.column(5).search('').draw();
-                } else if (val === "active") {
-                    table.column(5).search('Aktif').draw();
-                } else if (val === "inactive") {
-                    table.column(5).search('Tidak Aktif').draw();
-                }
-            });
+            // Pencarian
+            function doSearch() {
+                var q = $('#search-input').val().trim();
+                navigateWithParams(function(params) {
+                    if (q) { params.set('search', q); } else { params.delete('search'); }
+                    params.delete('page');
+                });
+            }
+            $('#search-btn').on('click', doSearch);
+            $('#search-input').on('keypress', function(e) { if (e.which === 13) { doSearch(); } });
 
             // Handle export button
             $('#export-excel-btn').on('click', function() {
@@ -531,17 +561,12 @@
                 // Build export URL with filters
                 var exportUrl = '{{ route("admin.customers.export") }}?';
                 var params = [];
-                
                 var teknisiFilter = $('#teknisi-filter').val();
                 var statusFilter = $('#status-filter').val();
-                
-                if (teknisiFilter) {
-                    params.push('technician=' + encodeURIComponent(teknisiFilter));
-                }
-                
-                if (statusFilter) {
-                    params.push('status=' + encodeURIComponent(statusFilter));
-                }
+                var searchVal = $('#search-input').val().trim();
+                if (teknisiFilter) params.push('technician=' + encodeURIComponent(teknisiFilter));
+                if (statusFilter) params.push('status=' + encodeURIComponent(statusFilter));
+                if (searchVal) params.push('search=' + encodeURIComponent(searchVal));
                 
                 exportUrl += params.join('&');
                 
