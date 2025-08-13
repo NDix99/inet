@@ -103,6 +103,14 @@
             </div>
         </div>
         <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <div class="input-group input-group-sm" style="max-width: 360px;">
+                    <input type="text" id="technician-search-input" class="form-control" placeholder="Cari nama, email, telepon, tanggal..." value="{{ $search ?? '' }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" id="technician-search-btn" type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table id="technicians-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -341,7 +349,7 @@
                 <small class="text-muted">
                     Menampilkan {{ $technicians->firstItem() ?? 0 }}–{{ $technicians->lastItem() ?? 0 }} dari {{ $technicians->total() }} teknisi
                 </small>
-                {{ $technicians->onEachSide(1)->links('pagination::bootstrap-4') }}
+                {{ $technicians->appends(request()->query())->onEachSide(1)->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
@@ -538,13 +546,30 @@
                 paging: false,          // matikan pagination DataTables
                 info: false,            // matikan text "Menampilkan x sampai y"
                 lengthChange: false,    // matikan dropdown jumlah baris
+                searching: false,       // gunakan pencarian server-side
                 language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
                 order: [[1, "asc"]],
-                dom: '<"row"<"col-sm-12 col-md-6"f>>' +   // hilangkan 'l'
-                     '<"row"<"col-sm-12"tr>>'             // hilangkan 'i' dan 'p'
+                dom: '<"row"<"col-sm-12"tr>>'             // hilangkan 'f', 'l', 'i' dan 'p'
                 // Jika tombol export dipakai, tambahkan 'B' ke dom dan pastikan assets Buttons ter-load.
                 // buttons: [ ... ] // opsional
             });
+            // Pencarian global teknisi (server-side)
+            function navigateWithParams(modifier) {
+                var params = new URLSearchParams(window.location.search);
+                modifier(params);
+                var newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                window.location.href = newUrl;
+            }
+
+            function doTechnicianSearch() {
+                var q = $('#technician-search-input').val().trim();
+                navigateWithParams(function(params) {
+                    if (q) { params.set('search', q); } else { params.delete('search'); }
+                    params.delete('page');
+                });
+            }
+            $('#technician-search-btn').on('click', doTechnicianSearch);
+            $('#technician-search-input').on('keypress', function(e) { if (e.which === 13) { doTechnicianSearch(); } });
             
             // Add hover effects to info boxes
             $('.info-box').hover(

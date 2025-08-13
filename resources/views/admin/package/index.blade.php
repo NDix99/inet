@@ -102,7 +102,7 @@
                 <div class="d-flex align-items-center">
                     <i class="fas fa-info-circle mr-2"></i>
                     <div>
-                        <strong>Informasi:</strong> Sebagai Admin, Anda hanya dapat mengatur persentase fee teknisi. Untuk menambah, mengubah harga, atau menghapus paket, silakan hubungi Superadmin.
+                        <strong>Informasi:</strong> Sebagai Admin, Anda hanya dapat mengatur persentase fee teknisi dan untuk mengatur fee sekarang di kontrol dari management teknisi. Untuk menambah, mengubah harga, atau menghapus paket, silakan hubungi Superadmin.
                     </div>
                 </div>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">

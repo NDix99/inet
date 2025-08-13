@@ -345,25 +345,38 @@ class AdminController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function technicianIndex()
+    public function technicianIndex(Request $request)
     {
+        $search = $request->query('search', '');
+
         $baseQuery = User::whereHas('role', function ($query) {
             $query->where('name', 'technician');
         });
 
-        $technicians = (clone $baseQuery)->paginate(20);
+        // Terapkan pencarian global
+        if (!empty($search)) {
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhereRaw('DATE_FORMAT(created_at, "%d/%m/%Y") like ?', ["%{$search}%"]);
+            });
+        }
 
-        $totalTechnicians    = (clone $baseQuery)->count();
-        $activeTechnicians   = (clone $baseQuery)->where('is_active', true)->count();
-        $inactiveTechnicians = (clone $baseQuery)->where('is_active', false)->count();
-        $registeredThisMonth = (clone $baseQuery)->where('created_at', '>=', now()->startOfMonth())->count();
+        $technicians = (clone $baseQuery)->latest()->paginate(20)->appends($request->query());
+
+        $totalTechnicians    = User::whereHas('role', function ($query) { $query->where('name', 'technician'); })->count();
+        $activeTechnicians   = User::whereHas('role', function ($query) { $query->where('name', 'technician'); })->where('is_active', true)->count();
+        $inactiveTechnicians = User::whereHas('role', function ($query) { $query->where('name', 'technician'); })->where('is_active', false)->count();
+        $registeredThisMonth = User::whereHas('role', function ($query) { $query->where('name', 'technician'); })->where('created_at', '>=', now()->startOfMonth())->count();
 
         return view('admin.technician.index', compact(
             'technicians',
             'totalTechnicians',
             'activeTechnicians',
             'inactiveTechnicians',
-            'registeredThisMonth'
+            'registeredThisMonth',
+            'search'
         ));
     }
 
@@ -508,10 +521,29 @@ class AdminController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function invoiceIndex()
+    public function invoiceIndex(Request $request)
     {
+        $search = $request->query('search', '');
+
+        // Query dasar invoice
+        $query = Invoice::with('customer')->latest();
+
+        // Pencarian global
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function ($cq) use ($search) {
+                      $cq->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhereRaw('DATE_FORMAT(invoice_date, "%d/%m/%Y") like ?', ["%{$search}%"]) 
+                  ->orWhereRaw('DATE_FORMAT(due_date, "%d/%m/%Y") like ?', ["%{$search}%"]);
+            });
+        }
+
         // Data untuk pagination
-        $invoices = Invoice::with('customer')->latest()->paginate(20);
+        $invoices = $query->paginate(20)->appends($request->query());
         
         // Data untuk statistik (total keseluruhan)
         $totalInvoices = Invoice::count();
@@ -524,7 +556,8 @@ class AdminController extends Controller
             'totalInvoices',
             'paidInvoices',
             'unpaidInvoices',
-            'overdueInvoices'
+            'overdueInvoices',
+            'search'
         ));
     }
 
