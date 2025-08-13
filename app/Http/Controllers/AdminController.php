@@ -149,7 +149,8 @@ class AdminController extends Controller
      */
     public function customerShow(Customer $customer)
     {
-        return view('admin.customer.show', compact('customer'));
+        $invoices = $customer->invoices()->latest()->get();
+        return view('admin.customer.show', compact('customer', 'invoices'));
     }
 
     /**

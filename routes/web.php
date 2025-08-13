@@ -88,6 +88,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     
     // Manajemen Invoice
     Route::get('/invoices', [AdminController::class, 'invoiceIndex'])->name('invoices.index');
+    Route::get('/invoices/create', [AdminController::class, 'invoiceCreate'])->name('invoices.create');
+    Route::post('/invoices', [AdminController::class, 'invoiceStore'])->name('invoices.store');
     Route::get('/invoices/{invoice}', [AdminController::class, 'invoiceShow'])->name('invoices.show');
     Route::get('/invoices/{invoice}/print', [AdminController::class, 'invoicePrint'])->name('invoices.print');
     Route::put('/invoices/{invoice}/status', [AdminController::class, 'invoiceUpdateStatus'])->name('invoices.update.status');

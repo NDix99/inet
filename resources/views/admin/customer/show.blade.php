@@ -267,9 +267,7 @@
                 <span class="badge badge-warning mr-2">
                     <i class="fas fa-history"></i> {{ $invoices->count() }} Invoice
                 </span>
-                <a href="{{ route('admin.invoices.create') }}?customer_id={{ $customer->id }}" class="btn btn-sm btn-primary mr-2">
-                    <i class="fas fa-plus"></i> Buat Invoice Baru
-                </a>
+                
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
                 </button>
