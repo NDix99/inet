@@ -126,6 +126,7 @@ Route::prefix('technician')->name('technician.')->middleware(['auth', 'role:tech
     Route::get('/customers/{customer}', [TechnicianController::class, 'customerShow'])->name('customers.show');
     Route::get('/customers/{customer}/edit', [TechnicianController::class, 'customerEdit'])->name('customers.edit');
     Route::put('/customers/{customer}', [TechnicianController::class, 'customerUpdate'])->name('customers.update');
+    Route::delete('/customers/{customer}', [TechnicianController::class, 'customerDestroy'])->name('customers.destroy');
     
     // Laporan Keuangan Teknisi
     Route::get('/financial/report', [TechnicianController::class, 'financialReport'])->name('financial.report');
