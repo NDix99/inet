@@ -3,19 +3,29 @@
 @section('title', 'Manajemen Pelanggan')
 
 @section('content_header')
-    <div class="d-flex justify-content-between flex-wrap">
-        <h1 class="mb-2">Manajemen Pelanggan</h1>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('technician.customers.create') }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> <span class="d-none d-sm-inline">Tambah Pelanggan</span>
+    <div class="customer-header">
+        <h1 class="header-title">Manajemen Pelanggan</h1>
+        <div class="header-actions">
+            <a href="{{ route('technician.customers.create') }}" class="btn btn-primary btn-add">
+                <i class="fas fa-plus"></i>
+                <span class="btn-text">Tambah Pelanggan</span>
             </a>
-            <form action="{{ route('technician.customers.import') }}" method="POST" enctype="multipart/form-data" class="d-flex">
-                @csrf
-                <input type="file" name="file" accept=".xlsx,.xls" required class="form-control form-control-sm">
-                <button type="submit" class="btn btn-success btn-sm ms-2">
-                    <i class="fas fa-file-excel"></i> <span class="d-none d-sm-inline">Import</span>
-                </button>
-            </form>
+            <div class="import-section">
+                <form action="{{ route('technician.customers.import') }}" method="POST" enctype="multipart/form-data" class="import-form">
+                    @csrf
+                    <div class="file-input-wrapper">
+                        <input type="file" name="file" accept=".xlsx,.xls" required class="form-control file-input" id="customer-file">
+                        <label for="customer-file" class="file-label">
+                            <i class="fas fa-upload"></i>
+                            <span class="file-text">Pilih File</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-import">
+                        <i class="fas fa-file-excel"></i>
+                        <span class="btn-text">Import</span>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 @stop
@@ -104,6 +114,157 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
     <style>
+        /* Header Styling */
+        .customer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem 0;
+        }
+
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Button Styling */
+        .btn-add, .btn-import {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-import {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-import:hover {
+            background: linear-gradient(135deg, #0f8a7d 0%, #2edb6a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.3);
+            color: white;
+        }
+
+        /* Import Section */
+        .import-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .import-form {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .file-label:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+            color: #667eea;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .customer-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+                text-align: center;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .import-form {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .file-input-wrapper {
+                width: 100%;
+            }
+
+            .file-label {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .btn-add, .btn-import {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header-title {
+                font-size: 1.25rem;
+            }
+        }
+
         /* Responsive table */
         .table-responsive {
             overflow-x: auto;
@@ -187,6 +348,12 @@
     
     <script>
         $(document).ready(function() {
+            // File input change handler
+            $('#customer-file').on('change', function() {
+                const fileName = this.files[0]?.name || 'Pilih File';
+                $('.file-text').text(fileName);
+            });
+
             // Initialize DataTable
             $('#customers-table').DataTable({
                 language: {
