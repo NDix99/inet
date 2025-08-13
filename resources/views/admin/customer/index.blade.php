@@ -23,6 +23,10 @@
                 <span class="d-none d-sm-inline">Bantuan</span>
                 <span class="d-inline d-sm-none">Help</span>
             </button>
+            <button type="button" class="btn btn-success btn-sm" id="export-excel-btn">
+                <i class="fas fa-file-excel mr-1"></i>
+                Export Excel
+            </button>
         </div>
     </div>
 @stop
@@ -123,12 +127,6 @@
                             <option value="inactive">Tidak Aktif</option>
                         </select>
                     </div>
-                </div>
-                <div class="col-md-6 d-flex justify-content-end">
-                    <button type="button" class="btn btn-success btn-sm" id="export-excel-btn">
-                        <i class="fas fa-file-excel mr-1"></i>
-                        Export Excel
-                    </button>
                 </div>
             </div>
 
@@ -234,7 +232,7 @@
                                         </button>
                                     </div>
 
-                                    <!-- Modal Konfirmasi Hapus -->
+                                    <!-- Delete Confirmation Modal -->
                                     <div class="modal fade" id="deleteModal{{ $customer->id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel{{ $customer->id }}" aria-hidden="true">
                                         <div class="modal-dialog" role="document">
                                             <div class="modal-content">
@@ -280,7 +278,8 @@
                     </tbody>
                 </table>
             </div>
-            {{-- Tambahkan pagination di bawah tabel --}}
+            
+            <!-- Pagination -->
             <div class="d-flex justify-content-center mt-3">
                 {{ $customers->links() }}
             </div>
@@ -337,11 +336,24 @@
         /* Info Box Improvements */
         .info-box {
             transition: all 0.3s ease;
+            margin-bottom: 1rem;
         }
 
         .info-box:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .info-box-content {
+            padding: 0.5rem;
+        }
+
+        .info-box-text {
+            font-size: 0.875rem;
+        }
+
+        .info-box-number {
+            font-size: 1.25rem;
         }
 
         /* Card Improvements */
@@ -352,6 +364,11 @@
         /* Table Improvements */
         .table-hover tbody tr:hover {
             background-color: rgba(0,123,255,0.1);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Button Improvements */
@@ -377,98 +394,9 @@
             background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         }
 
-        /* Gap utility */
+        /* Utility Classes */
         .gap-2 {
             gap: 0.5rem;
-        }
-
-        /* Responsive improvements */
-        .small-box .inner h3 {
-            font-size: 1.5rem;
-        }
-
-        .info-box {
-            margin-bottom: 1rem;
-        }
-
-        .info-box-content {
-            padding: 0.5rem;
-        }
-
-        .info-box-text {
-            font-size: 0.875rem;
-        }
-
-        .info-box-number {
-            font-size: 1.25rem;
-        }
-
-        .progress-description {
-            font-size: 0.75rem;
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 768px) {
-            .small-box .inner h3 {
-                font-size: 1.25rem;
-            }
-
-            .info-box-content {
-                padding: 0.25rem;
-            }
-
-            .info-box-text {
-                font-size: 0.75rem;
-            }
-
-            .info-box-number {
-                font-size: 1rem;
-            }
-
-            .progress-description {
-                font-size: 0.625rem;
-            }
-        }
-
-        /* Table responsive improvements - PERBAIKAN UTAMA */
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Hapus white-space nowrap untuk mobile */
-        @media (max-width: 768px) {
-            .table th, .table td {
-                white-space: normal;
-                min-width: 120px;
-            }
-            
-            /* Kolom tertentu bisa lebih kecil */
-            .table th:first-child, .table td:first-child {
-                min-width: 80px;
-            }
-            
-            .table th:last-child, .table td:last-child {
-                min-width: 100px;
-            }
-            
-            /* Kolom aksi lebih kecil di mobile */
-            .btn-group .btn {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.75rem;
-            }
-        }
-
-        /* Desktop tetap menggunakan nowrap */
-        @media (min-width: 769px) {
-            .table th, .table td {
-                white-space: nowrap;
-            }
-        }
-
-        /* Text utilities */
-        .text-nowrap {
-            white-space: nowrap;
         }
 
         .font-weight-bold {
@@ -479,7 +407,34 @@
             margin-bottom: 0 !important;
         }
 
-        /* Mobile-specific table improvements */
+        /* Responsive Table */
+        @media (max-width: 768px) {
+            .table th, .table td {
+                white-space: normal;
+                min-width: 120px;
+            }
+            
+            .table th:first-child, .table td:first-child {
+                min-width: 80px;
+            }
+            
+            .table th:last-child, .table td:last-child {
+                min-width: 100px;
+            }
+            
+            .btn-group .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .table th, .table td {
+                white-space: nowrap;
+            }
+        }
+
+        /* Mobile Optimizations */
         @media (max-width: 576px) {
             .table-responsive {
                 border: none;
@@ -497,11 +452,6 @@
                 padding: 0.25rem 0.4rem;
                 font-size: 0.7rem;
             }
-            
-            /* Sembunyikan beberapa elemen di mobile */
-            .d-mobile-none {
-                display: none !important;
-            }
         }
     </style>
 @stop
@@ -509,19 +459,19 @@
 @section('js')
     <script>
         $(document).ready(function() {
+            // Initialize DataTable
             var table = $('#customers-table').DataTable({
                 responsive: true,
                 autoWidth: false,
                 scrollX: true,
                 scrollCollapse: true,
-                paging: false,         // nonaktifkan pagination DataTables
-                info: false,           // nonaktifkan teks "Menampilkan ..."
-                lengthChange: false,   // nonaktifkan dropdown jumlah baris
+                paging: false,
+                info: false,
+                lengthChange: false,
                 language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
                 order: [[1, "asc"]],
-                dom: '<"row"<"col-sm-12 col-md-6"f>>' +   // hilangkan 'l'
-                     '<"row"<"col-sm-12"tr>>'             // hilangkan 'i' & 'p'
-                // buttons: [ ... ] // tetap jika diperlukan
+                dom: '<"row"<"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"tr>>'
             });
 
             // Add hover effects to info boxes
@@ -547,44 +497,21 @@
             // Auto-dismiss alerts
             $('.alert').delay(5000).fadeOut(500);
 
-            // Responsive button text
-            function updateButtonText() {
-                if (window.innerWidth < 576) {
-                    $('.dt-buttons .btn').each(function() {
-                        var $btn = $(this);
-                        var text = $btn.text();
-                        if (text.includes('Salin')) {
-                            $btn.html('<i class="fas fa-copy"></i>');
-                        } else if (text.includes('Excel')) {
-                            $btn.html('<i class="fas fa-file-excel"></i>');
-                        } else if (text.includes('PDF')) {
-                            $btn.html('<i class="fas fa-file-pdf"></i>');
-                        } else if (text.includes('Print')) {
-                            $btn.html('<i class="fas fa-print"></i>');
-                        }
-                    });
-                }
-            }
-
-            // Update button text on load and resize
-            updateButtonText();
-            $(window).resize(updateButtonText);
-
-            // Filter berdasarkan teknisi
+            // Filter by technician
             $('#teknisi-filter').on('change', function() {
                 var val = $(this).val();
                 if (val === "") {
-                    table.column(8).search('').draw(); // Kolom ke-9 (kolom tersembunyi)
+                    table.column(8).search('').draw();
                 } else {
                     table.column(8).search('^' + val + '$', true, false).draw();
                 }
             });
 
-            // Filter berdasarkan status
+            // Filter by status
             $('#status-filter').on('change', function() {
                 var val = $(this).val();
                 if (val === "") {
-                    table.column(5).search('').draw(); // Kolom Status (index 5)
+                    table.column(5).search('').draw();
                 } else if (val === "active") {
                     table.column(5).search('Aktif').draw();
                 } else if (val === "inactive") {
@@ -592,51 +519,21 @@
                 }
             });
 
-            // Mobile-specific improvements
-            function handleMobileView() {
-                if (window.innerWidth <= 768) {
-                    // Enable horizontal scroll for table
-                    $('.table-responsive').css('overflow-x', 'auto');
-                    
-                    // Adjust table column widths for mobile
-                    $('.table th, .table td').css('min-width', '120px');
-                    $('.table th:first-child, .table td:first-child').css('min-width', '80px');
-                    $('.table th:last-child, .table td:last-child').css('min-width', '100px');
-                }
-            }
-
-            // Call on load and resize
-            handleMobileView();
-            $(window).resize(handleMobileView);
-
             // Handle export button
             $('#export-excel-btn').on('click', function() {
-                var technicianFilter = $('#teknisi-filter').val();
-                var statusFilter = $('#status-filter').val();
-
-                var url = '{{ route("admin.customers.export") }}';
-                var params = {
-                    technician: technicianFilter,
-                    status: statusFilter
-                };
-
-                window.location.href = url + '?' + $.param(params);
-            });
-
-            // Export Excel functionality
-            $('#export-excel-btn').on('click', function() {
-                var teknisiFilter = $('#teknisi-filter').val();
-                var statusFilter = $('#status-filter').val();
-                
-                // Show loading state
                 var $btn = $(this);
                 var originalText = $btn.html();
+                
+                // Show loading state
                 $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Exporting...');
                 $btn.prop('disabled', true);
                 
                 // Build export URL with filters
                 var exportUrl = '{{ route("admin.customers.export") }}?';
                 var params = [];
+                
+                var teknisiFilter = $('#teknisi-filter').val();
+                var statusFilter = $('#status-filter').val();
                 
                 if (teknisiFilter) {
                     params.push('technician=' + encodeURIComponent(teknisiFilter));
@@ -670,6 +567,20 @@
                     $btn.prop('disabled', false);
                 }, 2000);
             });
+
+            // Mobile-specific improvements
+            function handleMobileView() {
+                if (window.innerWidth <= 768) {
+                    $('.table-responsive').css('overflow-x', 'auto');
+                    $('.table th, .table td').css('min-width', '120px');
+                    $('.table th:first-child, .table td:first-child').css('min-width', '80px');
+                    $('.table th:last-child, .table td:last-child').css('min-width', '100px');
+                }
+            }
+
+            // Call on load and resize
+            handleMobileView();
+            $(window).resize(handleMobileView);
         });
     </script>
 @stop
