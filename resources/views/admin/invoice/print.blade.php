@@ -158,13 +158,11 @@
                     <div>#{{ $invoice->invoice_number }}</div>
                 </div>
                 <div class="company-details">
-                    <h2>PT Internet Cepat</h2>
-                    <p>
-                        Jl. Raya Internet No. 123<br>
-                        Jakarta, Indonesia 12345<br>
-                        Telp: (021) 123-4567<br>
-                        Email: info@internetcepat.com
-                    </p>
+                    <h2>PT. DATA ARTA SEDAYA</h2>
+                    <p>Jl. Ngawi - madiun, Ngawi, Prayungan, Cangakan,
+                    <p>Kasreman, Kabupaten Ngawi, Jawa Timur 63281</p>
+				    <p>Telepon:  0857-3514-6195</p>
+                    <p>Email: admin@dasnet.my.id</p>
                 </div>
             </div>
         </div>

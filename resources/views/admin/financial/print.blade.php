@@ -165,12 +165,11 @@ if (isset($technicianId) && $technicianId) {
                     <div style="font-size: 16px; color: #6c757d;">Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</div>
                 </div>
                 <div class="company-details">
-                    <h2>PT Internet Cepat</h2>
-                    <p>
-                        Jl. Raya Internet No. 123<br>
-                        Jakarta, Indonesia 12345<br>
-                        Telp: (021) 123-4567<br>
-                        Email: info@internetcepat.com
+                    <h2>PT. DATA ARTA SEDAYA</h2>
+                    <p>Jl. Ngawi - madiun, Ngawi, Prayungan, Cangakan,
+                    <p>Kasreman, Kabupaten Ngawi, Jawa Timur 63281</p>
+				    <p>Telepon:  0857-3514-6195</p>
+                    <p>Email: admin@dasnet.my.id</p>
                     </p>
                 </div>
             </div>
@@ -547,7 +546,7 @@ if (isset($technicianId) && $technicianId) {
         <button onclick="window.print()" class="btn btn-primary">Cetak Laporan</button>
         <button onclick="window.close()" class="btn btn-secondary">Tutup</button>
     </div>
-   
+    
     <div class="print-container">
         <div class="header">
             <img src="https://www.dataartasedaya.net.id/assets/images/logov1.png" alt="Logo Header" style="height:48px; margin-bottom:10px;">
