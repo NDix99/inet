@@ -862,7 +862,9 @@ class AdminController extends Controller
         
         // Filter berdasarkan teknisi jika ada
         if ($technicianId) {
-            $invoices = $invoices->where('created_by', $technicianId);
+            $invoices = $invoices->whereHas('customer', function($query) use ($technicianId) {
+                $query->where('created_by', $technicianId);
+            });
         }
         
         $invoices = $invoices->get();
@@ -903,7 +905,11 @@ class AdminController extends Controller
         $technicianData = User::whereHas('role', function($query) {
             $query->where('name', 'technician');
         })->where('is_active', true)->get()->map(function($technician) use ($invoices, $startDate, $endDate) {
-            $technicianInvoices = $invoices->where('created_by', $technician->id);
+            // Perbaikan: Cari invoice berdasarkan customer yang dibuat oleh teknisi
+            $technicianInvoices = $invoices->filter(function($invoice) use ($technician) {
+                return $invoice->customer && $invoice->customer->created_by == $technician->id;
+            });
+            
             $customers = $technician->customers;
             
             // Hitung revenue dan fee
@@ -999,7 +1005,8 @@ class AdminController extends Controller
             'totalFee',
             'totalPtFee',
             'totalTax',
-            'totalPPN'
+            'totalPPN',
+            'technicianId' // Tambahkan ini
         ));
     }
 } 
