@@ -88,6 +88,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     
     // Manajemen Invoice
     Route::get('/invoices', [AdminController::class, 'invoiceIndex'])->name('invoices.index');
+    Route::get('/invoices/create', [AdminController::class, 'invoiceCreate'])->name('invoices.create');
+    Route::post('/invoices', [AdminController::class, 'invoiceStore'])->name('invoices.store');
     Route::get('/invoices/{invoice}', [AdminController::class, 'invoiceShow'])->name('invoices.show');
     Route::get('/invoices/{invoice}/print', [AdminController::class, 'invoicePrint'])->name('invoices.print');
     Route::put('/invoices/{invoice}/status', [AdminController::class, 'invoiceUpdateStatus'])->name('invoices.update.status');
@@ -107,6 +109,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/customers/{customer}/edit', [AdminController::class, 'customerEdit'])->name('customers.edit');
     Route::put('/customers/{customer}', [AdminController::class, 'customerUpdate'])->name('customers.update');
     Route::delete('/customers/{customer}', [AdminController::class, 'customerDestroy'])->name('customers.destroy');
+    
+    // Export customers
+    Route::post('/customers/export', [AdminController::class, 'exportCustomers'])->name('customers.export');
 });
 
 // Route untuk Teknisi
@@ -121,6 +126,7 @@ Route::prefix('technician')->name('technician.')->middleware(['auth', 'role:tech
     Route::get('/customers/{customer}', [TechnicianController::class, 'customerShow'])->name('customers.show');
     Route::get('/customers/{customer}/edit', [TechnicianController::class, 'customerEdit'])->name('customers.edit');
     Route::put('/customers/{customer}', [TechnicianController::class, 'customerUpdate'])->name('customers.update');
+    Route::delete('/customers/{customer}', [TechnicianController::class, 'customerDestroy'])->name('customers.destroy');
     
     // Laporan Keuangan Teknisi
     Route::get('/financial/report', [TechnicianController::class, 'financialReport'])->name('financial.report');

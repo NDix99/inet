@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('tax_percentage', 5, 2)->default(0); // Persentase pajak
             $table->decimal('tax_amount', 12, 2)->default(0); // Jumlah pajak
             $table->decimal('technician_fee_percentage', 5, 2)->default(0); // Persentase fee teknisi
-            $table->decimal('technician_fee_amount', 12, 2)->default(0); // Jumlah fee teknisi
+           // $table->decimal('technician_fee_amount', 12, 2)->default(0); // Jumlah fee teknisi
             $table->decimal('total_amount', 12, 2); // Total tagihan
             $table->enum('status', ['paid', 'unpaid', 'overdue', 'cancelled'])->default('unpaid'); // Status invoice
             $table->text('notes')->nullable(); // Catatan

@@ -12,7 +12,7 @@
                 <i class="fas fa-info-circle"></i> Kelola invoice pelanggan dan status pembayaran
             </p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#help-modal">
                 <i class="fas fa-question-circle"></i> 
                 <span class="d-none d-sm-inline">Bantuan</span>
@@ -168,9 +168,17 @@
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
                 </button>
-            </div>
+            </div> 
         </div>
         <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <div class="input-group input-group-sm" style="max-width: 360px;">
+                    <input type="text" id="invoice-search-input" class="form-control" placeholder="Cari no invoice, pelanggan, email, status, tanggal..." value="{{ $search ?? '' }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" id="invoice-search-btn" type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table id="invoices-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -527,7 +535,7 @@
             </div>
             {{-- Tambahkan pagination di bawah tabel --}}
             <div class="d-flex justify-content-center mt-3">
-                {{ $invoices->links() }}
+                {{ $invoices->appends(request()->query())->links() }}
             </div>
         </div>
     </div>
@@ -842,36 +850,32 @@
             $('#invoices-table').DataTable({
                 responsive: true,
                 autoWidth: false,
-                language: {
-                    url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}'
-                },
-                order: [[2, "desc"]], // Urutkan berdasarkan tanggal invoice (descending)
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        text: '<i class="fas fa-copy"></i> Salin',
-                        className: 'btn btn-sm btn-secondary'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-sm btn-success'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-sm btn-danger'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-sm btn-info'
-                    }
-                ]
+                paging: false,        // nonaktifkan pagination DataTables
+                info: false,          // nonaktifkan teks "Menampilkan ..."
+                lengthChange: false,  // nonaktifkan dropdown jumlah baris
+                searching: false,     // gunakan pencarian global server-side
+                language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
+                order: [[2, "desc"]],
+                dom: '<"row"<"col-sm-12"tr>>'            // hilangkan 'f', 'l', 'i', 'p'
+                // buttons: [ ... ] // tetap jika ingin export/print
             });
+            // Pencarian global invoice
+            function navigateWithParams(modifier) {
+                var params = new URLSearchParams(window.location.search);
+                modifier(params);
+                var newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                window.location.href = newUrl;
+            }
+
+            function doInvoiceSearch() {
+                var q = $('#invoice-search-input').val().trim();
+                navigateWithParams(function(params) {
+                    if (q) { params.set('search', q); } else { params.delete('search'); }
+                    params.delete('page');
+                });
+            }
+            $('#invoice-search-btn').on('click', doInvoiceSearch);
+            $('#invoice-search-input').on('keypress', function(e) { if (e.which === 13) { doInvoiceSearch(); } });
             
             // Add hover effects to info boxes
             $('.info-box').hover(

@@ -20,8 +20,6 @@ class Package extends Model
         'price',
         'base_price',
         'tax_amount',
-        'technician_fee_percentage',
-        'technician_fee_amount',
         'description',
         'is_active',
     ];
@@ -35,8 +33,6 @@ class Package extends Model
         'price' => 'decimal:2',
         'base_price' => 'decimal:2',
         'tax_amount' => 'decimal:2',
-        'technician_fee_percentage' => 'decimal:2',
-        'technician_fee_amount' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

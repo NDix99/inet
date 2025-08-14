@@ -35,7 +35,7 @@
                 <span class="info-box-icon"><i class="fas fa-users"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Total Teknisi</span>
-                    <span class="info-box-number">{{ $technicians->count() }}</span>
+                    <span class="info-box-number">{{ $totalTechnicians }}</span>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Teknisi Aktif</span>
-                    <span class="info-box-number">{{ $technicians->where('is_active', true)->count() }}</span>
+                    <span class="info-box-number">{{ $activeTechnicians }}</span>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <span class="info-box-icon"><i class="fas fa-clock"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Teknisi Nonaktif</span>
-                    <span class="info-box-number">{{ $technicians->where('is_active', false)->count() }}</span>
+                    <span class="info-box-number">{{ $inactiveTechnicians }}</span>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 <span class="info-box-icon"><i class="fas fa-calendar-alt"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Terdaftar Bulan Ini</span>
-                    <span class="info-box-number">{{ $technicians->where('created_at', '>=', now()->startOfMonth())->count() }}</span>
+                    <span class="info-box-number">{{ $registeredThisMonth }}</span>
                 </div>
             </div>
         </div>
@@ -95,7 +95,7 @@
             </h3>
             <div class="card-tools">
                 <span class="badge badge-success mr-2">
-                    <i class="fas fa-list"></i> {{ $technicians->count() }} Teknisi
+                    <i class="fas fa-list"></i> {{ $totalTechnicians }} Teknisi
                 </span>
                 <button type="button" class="btn btn-tool" data-card-widget="collapse">
                     <i class="fas fa-minus"></i>
@@ -103,6 +103,14 @@
             </div>
         </div>
         <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <div class="input-group input-group-sm" style="max-width: 360px;">
+                    <input type="text" id="technician-search-input" class="form-control" placeholder="Cari nama, email, telepon, tanggal..." value="{{ $search ?? '' }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" id="technician-search-btn" type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table id="technicians-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -336,6 +344,13 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted">
+                    Menampilkan {{ $technicians->firstItem() ?? 0 }}–{{ $technicians->lastItem() ?? 0 }} dari {{ $technicians->total() }} teknisi
+                </small>
+                {{ $technicians->appends(request()->query())->onEachSide(1)->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 
@@ -528,36 +543,33 @@
             $('#technicians-table').DataTable({
                 responsive: true,
                 autoWidth: false,
-                language: {
-                    url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}'
-                },
-                order: [[1, "asc"]], // Urutkan berdasarkan nama (ascending)
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                     '<"row"<"col-sm-12"tr>>' +
-                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        text: '<i class="fas fa-copy"></i> Salin',
-                        className: 'btn btn-sm btn-secondary'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fas fa-file-excel"></i> Excel',
-                        className: 'btn btn-sm btn-success'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: '<i class="fas fa-file-pdf"></i> PDF',
-                        className: 'btn btn-sm btn-danger'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-sm btn-info'
-                    }
-                ]
+                paging: false,          // matikan pagination DataTables
+                info: false,            // matikan text "Menampilkan x sampai y"
+                lengthChange: false,    // matikan dropdown jumlah baris
+                searching: false,       // gunakan pencarian server-side
+                language: { url: '{{ asset("vendor/datatables/lang/Indonesian.json") }}' },
+                order: [[1, "asc"]],
+                dom: '<"row"<"col-sm-12"tr>>'             // hilangkan 'f', 'l', 'i' dan 'p'
+                // Jika tombol export dipakai, tambahkan 'B' ke dom dan pastikan assets Buttons ter-load.
+                // buttons: [ ... ] // opsional
             });
+            // Pencarian global teknisi (server-side)
+            function navigateWithParams(modifier) {
+                var params = new URLSearchParams(window.location.search);
+                modifier(params);
+                var newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                window.location.href = newUrl;
+            }
+
+            function doTechnicianSearch() {
+                var q = $('#technician-search-input').val().trim();
+                navigateWithParams(function(params) {
+                    if (q) { params.set('search', q); } else { params.delete('search'); }
+                    params.delete('page');
+                });
+            }
+            $('#technician-search-btn').on('click', doTechnicianSearch);
+            $('#technician-search-input').on('keypress', function(e) { if (e.which === 13) { doTechnicianSearch(); } });
             
             // Add hover effects to info boxes
             $('.info-box').hover(

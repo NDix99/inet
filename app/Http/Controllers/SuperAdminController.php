@@ -52,7 +52,11 @@ class SuperAdminController extends Controller
         $totalUnpaid = Invoice::where('status', 'unpaid')->sum('total_amount');
         $totalOverdue = Invoice::where('status', 'overdue')->sum('total_amount');
         $totalTax = Invoice::sum('tax_amount');
-        $totalTechnicianFee = Invoice::sum('technician_fee_amount');
+        
+        // Ubah perhitungan total fee teknisi dari users table
+        $totalTechnicianFee = User::whereHas('role', function ($query) {
+            $query->where('name', 'technician');
+        })->sum('technician_fee_amount');
 
         // Mendapatkan data pelanggan terbaru
         $latestCustomers = Customer::with(['package', 'creator'])

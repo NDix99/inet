@@ -102,7 +102,7 @@
                 <div class="d-flex align-items-center">
                     <i class="fas fa-info-circle mr-2"></i>
                     <div>
-                        <strong>Informasi:</strong> Sebagai Admin, Anda hanya dapat mengatur persentase fee teknisi. Untuk menambah, mengubah harga, atau menghapus paket, silakan hubungi Superadmin.
+                        <strong>Informasi:</strong> Sebagai Admin, Anda hanya dapat mengatur persentase fee teknisi dan untuk mengatur fee sekarang di kontrol dari management teknisi. Untuk menambah, mengubah harga, atau menghapus paket, silakan hubungi Superadmin.
                     </div>
                 </div>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -118,7 +118,6 @@
                             <th>Nama Paket</th>
                             <th>Tipe</th>
                             <th>Harga (Termasuk PPN 11%)</th>
-                            <th>Fee Teknisi</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -172,9 +171,6 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="{{ route('admin.packages.edit', $package) }}" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-percentage"></i> Atur Fee
-                                        </a>
                                         <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#detail-modal-{{ $package->id }}">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -276,7 +272,7 @@
                                                                             <i class="fas fa-percentage"></i>
                                                                         </div>
                                                                         <div>
-                                                                            <small class="text-muted">Fee Teknisi</small>
+                                                                            <small class="text-muted"></small>
                                                                             <div class="font-weight-bold">
                                                                                 @if($package->technician_fee_percentage)
                                                                                     {{ $package->technician_fee_percentage }}%
@@ -284,7 +280,7 @@
                                                                                         Rp {{ number_format($package->technician_fee_amount, 0, ',', '.') }}
                                                                                     </div>
                                                                                 @else
-                                                                                    <span class="text-muted">Belum diatur</span>
+                                                                                    
                                                                                 @endif
                                                                             </div>
                                                                         </div>
@@ -306,9 +302,7 @@
                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                                             <i class="fas fa-times"></i> Tutup
                                                         </button>
-                                                        <a href="{{ route('admin.packages.edit', $package) }}" class="btn btn-warning">
-                                                            <i class="fas fa-percentage"></i> Atur Fee Teknisi
-                                                        </a>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>
