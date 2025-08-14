@@ -60,7 +60,7 @@ if (isset($technicianId) && $technicianId) {
         
         .company-details {
             text-align: right;
-            color: #265bed;
+            color: #060606;
         }
         
         .invoice-title {
@@ -270,6 +270,8 @@ if (isset($technicianId) && $technicianId) {
 <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
     <h2>Data Tidak Ditemukan</h2>
     <p>Data teknisi tidak ditemukan atau tidak valid.</p>
+    <p>Technician ID: {{ $technicianId ?? 'Tidak ada' }}</p>
+    <p>Jumlah data teknisi: {{ count($technicianData ?? []) }}</p>
     <button onclick="window.close()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
         Tutup
     </button>
