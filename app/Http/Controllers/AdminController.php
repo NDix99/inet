@@ -735,30 +735,34 @@ class AdminController extends Controller
             ];
         });
         
-        // Data untuk mitra (teknisi) - menggunakan struktur yang sesuai dengan view
+        // Data untuk mitra (teknisi) - PERBAIKAN PERHITUNGAN
         $technicianData = User::whereHas('role', function($query) {
             $query->where('name', 'technician');
         })->where('is_active', true)->get()->map(function($technician) use ($invoices, $startDate, $endDate) {
             $technicianInvoices = $invoices->where('created_by', $technician->id);
             $customers = $technician->customers;
             
-            // Hitung revenue dan fee
+            // Hitung revenue sebagai harga dasar
             $revenue = $technicianInvoices->sum('total_amount');
+            
+            // PERBAIKAN: Hitung fee mitra berdasarkan persentase yang ada di database
             $fee = $technicianInvoices->sum('technician_fee_amount');
-            $ppn = $technicianInvoices->sum('tax_amount');
+            
+            // Jika fee masih 0, hitung ulang berdasarkan persentase teknisi
+            if ($fee == 0 && $technician->technician_fee_percentage > 0) {
+                $fee = $technicianInvoices->sum(function($invoice) use ($technician) {
+                    $basePrice = $invoice->package->base_price; // Harga dasar dari paket
+                    return round(($basePrice * $technician->technician_fee_percentage) / 100, 2);
+                });
+            }
+            
+            // PERBAIKAN: Hitung PPN dari harga dasar (11%)
+            $ppn = round($revenue * 0.11);
             
             // Hitung rata-rata fee percentage berdasarkan fee yang sudah disimpan di invoice
             $totalBasePrice = $technicianInvoices->sum(function($invoice) {
                 return $invoice->package->base_price; // Gunakan harga dasar dari paket
             });
-            
-            // Jika fee masih 0, coba hitung ulang berdasarkan persentase teknisi
-            if ($fee == 0 && $technician->technician_fee_percentage > 0) {
-                $fee = $technicianInvoices->sum(function($invoice) use ($technician) {
-                    $basePrice = $invoice->package->base_price; // Harga dasar
-                    return round(($basePrice * $technician->technician_fee_percentage) / 100, 2);
-                });
-            }
             
             $avgFeePercentage = $totalBasePrice > 0 ? ($fee / $totalBasePrice) * 100 : $technician->technician_fee_percentage;
             
@@ -815,8 +819,7 @@ class AdminController extends Controller
         // Hitung total fee untuk mitra dan PT
         $totalFee = $technicianData->sum('fee');
         $totalPtFee = $totalRevenue - $totalFee;
-        $totalTax = $invoices->sum('tax_amount');
-        $totalPPN = $totalTax; // PPN sama dengan tax
+        $totalPPN = $technicianData->sum('ppn'); // PPN yang sudah diperbaiki
         
         return view('admin.financial.report', compact(
             'invoices',
@@ -833,7 +836,6 @@ class AdminController extends Controller
             'technicianData',
             'totalFee',
             'totalPtFee',
-            'totalTax',
             'totalPPN'
         ));
     }
