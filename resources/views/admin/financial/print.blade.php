@@ -60,7 +60,7 @@ if (isset($technicianId) && $technicianId) {
         
         .company-details {
             text-align: right;
-            color: #060606;
+            color: #265bed;
         }
         
         .invoice-title {
@@ -248,7 +248,7 @@ if (isset($technicianId) && $technicianId) {
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <th>Total Di Bayar Ke PT + PPN 11% :</th>
+                        <th>Total Di Bayar Ke PT ( 70% + PPN 11% ):</th>
                         <td class="text-right">Rp {{ number_format(($singleTechnician['total_pt_fee'] ?? 0) + ($singleTechnician['ppn'] ?? 0), 0, ',', '.') }}</td>
                     </tr>
                 </tfoot>
