@@ -234,7 +234,7 @@ if (isset($technicianId) && $technicianId) {
                         <td class="text-right">Rp {{ number_format(($singleTechnician['revenue'] ?? 0) + ($singleTechnician['ppn'] ?? 0), 0, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <td>Fee Teknisi ({{ number_format($singleTechnician['avg_fee_percentage'] ?? 0, 1) }}%)</td>
+                        <td>Fee Mitra ({{ number_format($singleTechnician['avg_fee_percentage'] ?? 0, 1) }}%)</td>
                         <td class="text-right">Rp {{ number_format($singleTechnician['fee'] ?? 0, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
@@ -248,7 +248,7 @@ if (isset($technicianId) && $technicianId) {
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <th>Total Di Bayar Ke PT ( 70% + PPN 11% ):</th>
+                        <th>Total Di Bayar Ke PT + PPN 11% :</th>
                         <td class="text-right">Rp {{ number_format(($singleTechnician['total_pt_fee'] ?? 0) + ($singleTechnician['ppn'] ?? 0), 0, ',', '.') }}</td>
                     </tr>
                 </tfoot>
