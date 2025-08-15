@@ -3,6 +3,20 @@ $singleTechnician = null;
 if (isset($technicianId) && $technicianId) {
     $singleTechnician = collect($technicianData)->firstWhere('technician.id', $technicianId);
 }
+
+// Perbaikan perhitungan
+if ($singleTechnician) {
+    $basePrice = $singleTechnician['revenue'] ?? 0;
+    $ppn = round($basePrice * 0.11); // PPN 11% dari harga dasar
+    $totalWithPpn = $basePrice + $ppn; // Total harga dasar + PPN
+    
+    $feePercentage = $singleTechnician['avg_fee_percentage'] ?? 40; // Default 40%
+    $mitraFee = round($basePrice * ($feePercentage / 100)); // Fee mitra dari harga dasar
+    $ptFee = $basePrice - $mitraFee; // Fee PT = harga dasar - fee mitra
+    
+    $totalFee = $mitraFee + $ptFee; // Total fee (mitra + PT)
+    $totalPaidToPt = $ptFee + $ppn; // Total dibayar ke PT + PPN
+}
 @endphp
 
 @if($singleTechnician && isset($singleTechnician['technician']))
@@ -223,33 +237,33 @@ if (isset($technicianId) && $technicianId) {
                 <tbody>
                     <tr>
                         <td>Total Harga Dasar</td>
-                        <td class="text-right">Rp {{ number_format($singleTechnician['revenue'] ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($basePrice, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
                         <td>PPN (11%)</td>
-                        <td class="text-right">Rp {{ number_format($singleTechnician['ppn'] ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($ppn, 0, ',', '.') }}</td>
                     </tr>
                     <tr style="background-color: #f8f9fa; font-weight: bold;">
                         <td>Total (Harga Dasar + PPN)</td>
-                        <td class="text-right">Rp {{ number_format(($singleTechnician['revenue'] ?? 0) + ($singleTechnician['ppn'] ?? 0), 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($totalWithPpn, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <td>Fee Mitra ({{ number_format($singleTechnician['avg_fee_percentage'] ?? 0, 1) }}%)</td>
-                        <td class="text-right">Rp {{ number_format($singleTechnician['fee'] ?? 0, 0, ',', '.') }}</td>
+                        <td>Fee Mitra ({{ number_format($feePercentage, 1) }}%)</td>
+                        <td class="text-right">Rp {{ number_format($mitraFee, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <td>Fee PT ({{ number_format(100 - ($singleTechnician['avg_fee_percentage'] ?? 0), 1) }}%)</td>
-                        <td class="text-right">Rp {{ number_format($singleTechnician['total_pt_fee'] ?? 0, 0, ',', '.') }}</td>
+                        <td>Fee PT ({{ number_format(100 - $feePercentage, 1) }}%)</td>
+                        <td class="text-right">Rp {{ number_format($ptFee, 0, ',', '.') }}</td>
                     </tr>
                     <tr style="background-color: #f8f9fa; font-weight: bold;">
                         <td>Total Fee (Mitra + PT)</td>
-                        <td class="text-right">Rp {{ number_format(($singleTechnician['fee'] ?? 0) + ($singleTechnician['total_pt_fee'] ?? 0), 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($totalFee, 0, ',', '.') }}</td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <th>Total Di Bayar Ke PT ( 70% + PPN 11% ):</th>
-                        <td class="text-right">Rp {{ number_format(($singleTechnician['total_pt_fee'] ?? 0) + ($singleTechnician['ppn'] ?? 0), 0, ',', '.') }}</td>
+                        <th>Total Di Bayar Ke PT + PPN 11%:</th>
+                        <td class="text-right">Rp {{ number_format($totalPaidToPt, 0, ',', '.') }}</td>
                     </tr>
                 </tfoot>
             </table>
